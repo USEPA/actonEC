@@ -1,0 +1,1859 @@
+---
+title: "Water Quality and Methane Emissions at Acton Lake"
+author: "J. Beaulieu and S. Waldo"
+date: "January 26, 2017"
+output:
+  word_document: default
+  pdf_document:
+    includes:
+      in_header: header.tex
+  html_document: default
+---
+## 1. Background:
+
+2. A map showing the location of the sampled sites
+3. A 3D map of the reservoir showing the measurement results for :
+    + CH~4~ emissions
+    + Chlorophyll a
+4. Figures showing how Acton Lake compared to the other 31 reservoirs in the study in terms of:
+    + CH~4~ emissions
+    + Total phosphorus 
+    + Total nitrogen
+    + Chlorophyll a
+5. Tables summarizing the other measured water quality values at each site within Acton Lake    
+
+
+
+
+```{r setup, results='hide', message=FALSE, warning=FALSE, echo=FALSE}
+#myWd <- "C:/Users/JBEAULIE/GitRepository/mulitResSurvey" # for Jake
+#myWd <- "C:/R_Projects/actonFluxProject" # for Sarah
+
+globalWd <- "/Users/swaldo/Documents/epaComputer/C_R_Projects/actonEC/data/grtsEqArea/" #location of GIS files
+globalWd<- "/Users/swaldo/Documents/epaComputer/C_R_Projects/actonFluxProject/dataInput/"
+  #" ⁨Use▸ ⁨swaldo⁩ ▸ ⁨Documents⁩ ▸ ⁨epaComputer⁩ ▸ ⁨C_R_Projects⁩ ▸ ⁨actonFluxProject⁩ ▸ ⁨dataInput⁩"
+```
+
+
+```{r results='hide', message=FALSE, warning=FALSE, echo=FALSE}
+#Get the data and libraries
+
+# knit() creates a new session and therefore can't read objects directly from
+# workspace.  Run this file outside of project session and load project
+# workspace.
+
+#not sure about this:
+#is this where the "eqAreaData" comes from?
+#got it: run through the GRTS routine, then exit, selecting the option to "Save Workspace", then you can load this info by loading .RData
+#load(paste(myWd, "/.RData", sep = ""))
+
+library(ggplot2)
+library(ggmap)
+library(dplyr)
+library(knitr)
+library(rgdal)
+library(rgeos)
+```
+
+\newpage
+
+## 2. Map of Sampled Sites    
+We sampled Acton Lake on July 10^th^ - 11^th^, August 31^st^ - September 1^st^, and October 4^th^ - 5^th^ of 2017. The sampling sites were chosen using a generalized random tessellation stratified design ("GRTS"), an approach which combines elements of systematic and random survey designs which allows for the random allocation of sampling sites with maximum  spatial coverage of the reservoir. We used a GPS and geographic information system (GIS) software to locate each sampling site (+/- 30 meters).  
+  
+  
+
+```{r results='hide', message=FALSE, warning=FALSE, echo=FALSE, fig.cap='*Location of the fifteen sample sites within Acton Lake. Satellite image from Google Maps.*'}
+
+
+# Read and project spatial points dataframe for plotting
+# actonSitesPlot201707 <- rgdal::readOGR(dsn = globalWd, 
+#                           layer = "acton201707SitesEqAreaDataEC")  # shapefile with data for July
+actonSitesPlot201707 <- read.dbf(paste0(globalWd, "acton201707SitesEqAreaDataEC.dbf"))
+actonSitesPlot201707_84 <- spTransform(x = actonSitesPlot201707, #reproject
+                            CRS("+proj=longlat +datum=WGS84")) # projection for google maps
+
+actonSitesPlot201707_84@data <- mutate(actonSitesPlot201707_84@data, 
+                            long=coordinates(actonSitesPlot201707_84)[,1], # add long to @data slot
+                            lat=coordinates(actonSitesPlot201707_84)[,2]) # add lat to @data slot
+
+actonSitesPlot201708 <- readOGR(dsn = globalWd,
+                            layer = "acton201708SitesEqAreaDataEC") # shapefile with data for Aug
+actonSitesPlot201708_84 <- spTransform(x = actonSitesPlot201708, #reproject
+                            CRS("+proj=longlat +datum=WGS84")) # projection for google maps
+
+actonSitesPlot201708_84@data <- mutate(actonSitesPlot201708_84@data, 
+                            long=coordinates(actonSitesPlot201708_84)[,1], # add long to @data slot
+                            lat=coordinates(actonSitesPlot201708_84)[,2]) # add lat to @data slot
+
+actonSitesPlot201710 <- readOGR(dsn = globalWd,
+                            layer = "acton201710SitesEqAreaDataEC") # shapefile with data for Oct
+actonSitesPlot201710_84 <- spTransform(x = actonSitesPlot201710, #reproject
+                            CRS("+proj=longlat +datum=WGS84")) # projection for google maps
+
+actonSitesPlot201710_84@data <- mutate(actonSitesPlot201710_84@data, 
+                            long=coordinates(actonSitesPlot201710_84)[,1], # add long to @data slot
+                            lat=coordinates(actonSitesPlot201710_84)[,2]) # add lat to @data slot
+
+
+
+
+
+
+actonSites84 <- spTransform(x = actonSitesPlot201707, #reproject
+                            CRS("+proj=longlat +datum=WGS84")) # projection for google maps
+
+
+
+actonSites84@data <- mutate(actonSites84@data, 
+                            long=coordinates(actonSites84)[,1], # add long to @data slot
+                            lat=coordinates(actonSites84)[,2]) # add lat to @data slot
+
+# Get ggmap
+ # bbox <- make_bbox(data=actonSites84@data, #defines map extent based on sample site lat/lon
+ #                   long, lat, f = 0.4) # f is zoom.  Large #, less zoom. tweak for each lake.
+ # actonSat <- get_map(location = bbox,
+ #                     color = "color",
+ #                     source = "google",
+ #                     maptype = "satellite") #this is a 12.5 Mb file
+ # 
+ # ggmap(actonSat) +
+ #   ylab("Latitude") +
+ #   xlab ("Longitude") +
+ #   geom_point(data=filter(actonSites84@data, EvalStatus == "sampled"), #only main sites
+ #              aes(x=long, y=lat),
+ #              size = 2, color = "#00BFC4") + # specify color to be consistent across maps
+ #   theme(axis.title.y = element_blank(), # Eliminate x-axis title
+ #         plot.title = element_text(hjust = 0.5)) +  #plot title justify center
+ #   geom_text(data=filter(actonSites84@data, EvalStatus == "sampled"), #only main sites
+ #             aes(label=siteID, x=long, y=lat),
+ #             hjust=1.2, vjust=0, size=3, color = "#00BFC4") +      #alternate color: "#F8766D"
+ #   coord_equal() +
+ #   ggtitle("Acton Lake Sample Sites")
+```
+
+ ```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7}
+ 
+ 
+ 
+ 
+ ```
+ 
+
+\newpage
+Setup for all lollipop plots:
+```{r results='hide', message=FALSE, warning=FALSE, echo=FALSE}
+actonEqArea84 <- readOGR(dsn = globalWd, # get polygon
+                           layer = "actonEqArea84",  # shapefile name
+                            verbose = FALSE)  #keep from reporting progress
+
+actonEqArea84 <- gUnaryUnion(actonEqArea84, id = actonEqArea84@data$GNIS_Name)
+
+actonSitesPlot201707_84@data <- merge(actonSitesPlot201707_84@data, # add emission to point shp
+                             filter(eqAreaDataSub, Lake_Name == "Acton Lake 2017 July") %>%
+                               #select(ch4.erate.mg.h, co2.erate.mg.h, siteID))
+                               select(ebMlHrM2, ch4.erate.mg.h, co2.drate.mg.h.best, ch4.drate.mg.h.best, ch4.trate.mg.h, siteID))
+actonSitesPlot201708_84@data <- merge(actonSitesPlot201708_84@data, # add emission to point shp
+                             filter(eqAreaDataSub, Lake_Name == "Acton Lake 2017 Aug") %>%
+                               #select(ch4.erate.mg.h, co2.erate.mg.h, siteID))
+                               select(ebMlHrM2, ch4.erate.mg.h, co2.drate.mg.h.best, ch4.drate.mg.h.best, ch4.trate.mg.h, siteID))
+actonSitesPlot201710_84@data <- merge(actonSitesPlot201710_84@data, # add emission to point shp
+                             filter(eqAreaDataSub, Lake_Name == "Acton Lake 2017 Oct") %>%
+                               #select(ch4.erate.mg.h, co2.erate.mg.h, siteID))
+                               select(ebMlHrM2, ch4.erate.mg.h, co2.drate.mg.h.best, ch4.drate.mg.h.best, ch4.trate.mg.h, siteID))
+
+# load external script (this is the scatterplot3d function, but changed a bit with to add more user control over style)
+source(paste(myWd, "/scriptsAndRmd/scatterplot3d_edit.R", sep = ""))
+
+# grab coordinates from polygon (in order to plot as a line on the xy plane of 3D plot)
+coords = fortify(actonEqArea84)
+coords <- subset(coords, !hole)
+
+
+
+```
+
+## 3.  Within-lake values of methane & carbon dioxide diffusive and ebullitive emissions as well as chlorophyll a concentrations.  
+
+\newpage
+
+July 10^th^ ebullitive methane emissions  
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Methane ebullitive emissions from July 10^th^ - 11^th^ measured at the 15 sample sites within Acton Lake. The height of each "lollipop" corresponds to the emission rate shown on the vertical z-axis in units of milligrams CH~4~ per square meter of lake surface per hour. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot201707_84@data, {
+  ch4_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",  
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(July~10^{th}~2017~Methane~Ebullition),      # main plot title
+                                   xlab="Latitude",                                       # x-axis label 
+                                   ylab="",                                       # y-axis label
+                                 y.margin.add=0.5, 
+                                 #x.margin.add=0.5,
+                                 cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CH[4]~ebullitive~efflux~(mg~ CH[4]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,25),                            # range of z data shown 
+                                 labs.line.z=-0.5,
+                                 n.breaks.x=7,
+                                 x.pretty=FALSE,
+                                 x.sig=4,
+                                 y.pretty=FALSE,
+                                 y.sig=4,
+                                
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+  # reposition & add y-axis label
+  dims <- par("usr")                        # format of 'dims' is vector of: [xmin,xmax,ymin,ymax]
+  x <- dims[2] - 0.1*diff(dims[1:2])       # define x position of label
+  y <- dims[3] + 0.08*diff(dims[3:4])       # define y position of label. Lower number = lower down
+  text(x,y,"Longitude", srt=58)             # add label.  srt sets angle
+
+  # add the lollipop points
+  ch4_plot$points3d(x=long, y=lat, z=as.numeric(as.character(ch4.erate.mg.h)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#FF0000",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=1.5 #(sqrt(ch4.erate.mg.h)/10) + 1          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+\newpage
+
+July 10^th^ diffusive methane emissions
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Methane ebullitive emissions from July 10^th^ - 11^th^ measured at the 15 sample sites within Acton Lake. The height of each "lollipop" corresponds to the emission rate shown on the vertical z-axis in units of milligrams CH~4~ per square meter of lake surface per hour. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+
+
+actonEqArea84 <- readOGR(dsn = globalWd, # get polygon
+                           layer = "actonEqArea84",  # shapefile name
+                            verbose = FALSE)  #keep from reporting progress
+
+actonEqArea84 <- gUnaryUnion(actonEqArea84, id = actonEqArea84@data$GNIS_Name)
+
+actonSitesPlot07_84@data <- merge(actonSitesPlot07_84@data, # add emission to point shp
+                             filter(eqAreaData, Lake_Name == "Acton Lake") %>%
+                               select(ch4.drate.mg.h.best, siteID))
+
+# load external script (this is the scatterplot3d function, but changed a bit with to add more user control over style)
+source(paste(myWd, "/scriptsAndRmd/scatterplot3d_edit.R", sep = ""))
+
+# grab coordinates from polygon (in order to plot as a line on the xy plane of 3D plot)
+coords = fortify(actonEqArea84)
+coords <- subset(coords, !hole)
+
+
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot07_84@data, {
+  ch4_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",  
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(July~10^{th}~Diffusive~Methane~Emissions),      # main plot title
+                                   xlab="Latitude",                                       # x-axis label 
+                                   ylab="",                                       # y-axis label
+                                 y.margin.add=0.5, 
+                                 #x.margin.add=0.5,
+                                 cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CH[4]~diffusive~rate~(mg~ CH[4]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,25),                            # range of z data shown 
+                                 labs.line.z=-0.5,
+                                 n.breaks.x=7,
+                                 x.pretty=FALSE,
+                                 x.sig=4,
+                                 y.pretty=FALSE,
+                                 y.sig=4,
+                                
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+  # reposition & add y-axis label
+  dims <- par("usr")                        # format of 'dims' is vector of: [xmin,xmax,ymin,ymax]
+  x <- dims[2] - 0.1*diff(dims[1:2])       # define x position of label
+  y <- dims[3] + 0.08*diff(dims[3:4])       # define y position of label. Lower number = lower down
+  text(x,y,"Longitude", srt=58)             # add label.  srt sets angle
+
+  # add the lollipop points
+  ch4_plot$points3d(x=long, y=lat, z=as.numeric(as.character(ch4.drate.mg.h.best)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#FF0000",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=1.5 #(sqrt(ch4.erate.mg.h)/10) + 1          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+\newpage
+
+July 10^th^ total methane emissions  
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Methane ebullitive emissions from July 10^th^ - 11^th^ measured at the 15 sample sites within Acton Lake. The height of each "lollipop" corresponds to the emission rate shown on the vertical z-axis in units of milligrams CH~4~ per square meter of lake surface per hour. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot201707_84@data, {
+  ch4_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",  
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(July~10^{th}~2017~Methane~Efflux),      # main plot title
+                                   xlab="Latitude",                                       # x-axis label 
+                                   ylab="",                                       # y-axis label
+                                 y.margin.add=0.5, 
+                                 #x.margin.add=0.5,
+                                 cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CH[4]~total~efflux~(mg~ CH[4]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,25),                            # range of z data shown 
+                                 labs.line.z=-0.5,
+                                 n.breaks.x=7,
+                                 x.pretty=FALSE,
+                                 x.sig=4,
+                                 y.pretty=FALSE,
+                                 y.sig=4,
+                                
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+  # reposition & add y-axis label
+  dims <- par("usr")                        # format of 'dims' is vector of: [xmin,xmax,ymin,ymax]
+  x <- dims[2] - 0.1*diff(dims[1:2])       # define x position of label
+  y <- dims[3] + 0.08*diff(dims[3:4])       # define y position of label. Lower number = lower down
+  text(x,y,"Longitude", srt=58)             # add label.  srt sets angle
+
+  # add the lollipop points
+  ch4_plot$points3d(x=long, y=lat, z=as.numeric(as.character(ch4.trate.mg.h)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#660033",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=1.5 #(sqrt(ch4.erate.mg.h)/10) + 1          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+
+August 31^st^ ebullitive methane emissions
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Methane ebullitive emissions from July 10^th^ - 11^th^ measured at the 15 sample sites within Acton Lake. The height of each "lollipop" corresponds to the emission rate shown on the vertical z-axis in units of milligrams CH~4~ per square meter of lake surface per hour. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot201708_84@data, {
+  ch4_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",  
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(August~31^{st}~2017~Methane~Ebullition),      # main plot title
+                                   xlab="Latitude",                                       # x-axis label 
+                                   ylab="",                                       # y-axis label
+                                 y.margin.add=0.5, 
+                                 #x.margin.add=0.5,
+                                 cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CH[4]~ebullitive~efflux~(mg~ CH[4]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,25),                            # range of z data shown 
+                                 labs.line.z=-0.5,
+                                 n.breaks.x=7,
+                                 x.pretty=FALSE,
+                                 x.sig=4,
+                                 y.pretty=FALSE,
+                                 y.sig=4,
+                                
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+  # reposition & add y-axis label
+  dims <- par("usr")                        # format of 'dims' is vector of: [xmin,xmax,ymin,ymax]
+  x <- dims[2] - 0.1*diff(dims[1:2])       # define x position of label
+  y <- dims[3] + 0.08*diff(dims[3:4])       # define y position of label. Lower number = lower down
+  text(x,y,"Longitude", srt=58)             # add label.  srt sets angle
+
+  # add the lollipop points
+  ch4_plot$points3d(x=long, y=lat, z=as.numeric(as.character(ch4.erate.mg.h)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#FF0000",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=1.5 #(sqrt(ch4.erate.mg.h)/10) + 1          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+
+
+
+\newpage
+
+August 31^st^ diffusive methane emissions
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Methane ebullitive emissions from July 10^th^ - 11^th^ measured at the 15 sample sites within Acton Lake. The height of each "lollipop" corresponds to the emission rate shown on the vertical z-axis in units of milligrams CH~4~ per square meter of lake surface per hour. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+
+
+actonEqArea84 <- readOGR(dsn = globalWd, # get polygon
+                           layer = "actonEqArea84",  # shapefile name
+                            verbose = FALSE)  #keep from reporting progress
+
+actonEqArea84 <- gUnaryUnion(actonEqArea84, id = actonEqArea84@data$GNIS_Name)
+
+actonSitesPlot08_84@data <- merge(actonSitesPlot08_84@data, # add emission to point shp
+                             filter(eqAreaData, Lake_Name == "Acton Lake Aug") %>%
+                               select(ch4.drate.mg.h.best, siteID))
+
+# load external script (this is the scatterplot3d function, but changed a bit with to add more user control over style)
+source(paste(myWd, "/scriptsAndRmd/scatterplot3d_edit.R", sep = ""))
+
+# grab coordinates from polygon (in order to plot as a line on the xy plane of 3D plot)
+coords = fortify(actonEqArea84)
+coords <- subset(coords, !hole)
+
+
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot08_84@data, {
+  ch4_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",  
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(August~31^{st}~Diffusive~Methane~Emissions),      # main plot title
+                                   xlab="Latitude",                                       # x-axis label 
+                                   ylab="",                                       # y-axis label
+                                 y.margin.add=0.5, 
+                                 #x.margin.add=0.5,
+                                 cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CH[4]~diffusive~rate~(mg~ CH[4]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,25),                            # range of z data shown 
+                                 labs.line.z=-0.5,
+                                 n.breaks.x=7,
+                                 x.pretty=FALSE,
+                                 x.sig=4,
+                                 y.pretty=FALSE,
+                                 y.sig=4,
+                                
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+  # reposition & add y-axis label
+  dims <- par("usr")                        # format of 'dims' is vector of: [xmin,xmax,ymin,ymax]
+  x <- dims[2] - 0.1*diff(dims[1:2])       # define x position of label
+  y <- dims[3] + 0.08*diff(dims[3:4])       # define y position of label. Lower number = lower down
+  text(x,y,"Longitude", srt=58)             # add label.  srt sets angle
+
+  # add the lollipop points
+  ch4_plot$points3d(x=long, y=lat, z=as.numeric(as.character(ch4.drate.mg.h.best)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#FF0000",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=1.5 #(sqrt(ch4.erate.mg.h)/10) + 1          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+August 31^st^ total methane emissions
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Methane ebullitive emissions from July 10^th^ - 11^th^ measured at the 15 sample sites within Acton Lake. The height of each "lollipop" corresponds to the emission rate shown on the vertical z-axis in units of milligrams CH~4~ per square meter of lake surface per hour. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot201708_84@data, {
+  ch4_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",  
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(August~31^{st}~2017~Methane~Efflux),      # main plot title
+                                   xlab="Latitude",                                       # x-axis label 
+                                   ylab="",                                       # y-axis label
+                                 y.margin.add=0.5, 
+                                 #x.margin.add=0.5,
+                                 cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CH[4]~total~efflux~(mg~ CH[4]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,25),                            # range of z data shown 
+                                 labs.line.z=-0.5,
+                                 n.breaks.x=7,
+                                 x.pretty=FALSE,
+                                 x.sig=4,
+                                 y.pretty=FALSE,
+                                 y.sig=4,
+                                
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+  # reposition & add y-axis label
+  dims <- par("usr")                        # format of 'dims' is vector of: [xmin,xmax,ymin,ymax]
+  x <- dims[2] - 0.1*diff(dims[1:2])       # define x position of label
+  y <- dims[3] + 0.08*diff(dims[3:4])       # define y position of label. Lower number = lower down
+  text(x,y,"Longitude", srt=58)             # add label.  srt sets angle
+
+  # add the lollipop points
+  ch4_plot$points3d(x=long, y=lat, z=as.numeric(as.character(ch4.trate.mg.h)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#660033",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=1.5 #(sqrt(ch4.erate.mg.h)/10) + 1          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Methane diffusive emissions from August 31^st^ - Sept 1^st^ measured at the 15 sample sites within Acton Lake.*' }
+
+
+actonEqArea <- readOGR(dsn = globalWd, # get polygon
+                           layer = "actonEqArea",  # shapefile name
+                            verbose = FALSE)  #keep from reporting progress
+
+actonSitesPlot08@data <- merge(actonSitesPlot08@data, # add emission to point shp
+                             filter(eqAreaData, Lake_Name == "Acton Lake Aug") %>%
+                               select(ch4.drate.mg.h.best, siteID))
+
+# load external script (this is the scatterplot3d function, but changed a bit with to add more user control over style)
+source(paste(myWd, "/scriptsAndRmd/scatterplot3d_edit.R", sep = ""))
+
+# grab coordinates from polygon (in order to plot as a line on the xy plane of 3D plot)
+coords = fortify(actonEqArea)
+coords <- subset(coords, !hole)
+
+
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot08@data, {
+  ch4_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",   
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main="August 31st Diffusive Methane Emissions",      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                    cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CH[4]~diffusive~rate~(mg~ CH[4]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,25),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+
+  # add the lollipop points
+  ch4_plot$points3d(x=xcoord, y=ycoord, z=as.numeric(as.character(ch4.drate.mg.h.best)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#FF0000",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+\newpage
+
+October 4^th^ volumetric gas emissions
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Gas ebullitive emissions from October 4^th^ - 5^th^ measured at the 15 sample sites within Acton Lake.*' }
+
+
+actonEqArea <- readOGR(dsn = globalWd, # get polygon
+                           layer = "actonEqArea",  # shapefile name
+                            verbose = FALSE)  #keep from reporting progress
+
+actonSitesPlot10@data <- merge(actonSitesPlot10@data, # add emission to point shp
+                             filter(eqAreaData, Lake_Name == "Acton Lake Oct") %>%
+                               select(ebMlHrM2, siteID))
+
+# load external script (this is the scatterplot3d function, but changed a bit with to add more user control over style)
+source(paste(myWd, "/scriptsAndRmd/scatterplot3d_edit.R", sep = ""))
+
+# grab coordinates from polygon (in order to plot as a line on the xy plane of 3D plot)
+coords = fortify(actonEqArea)
+coords <- subset(coords, !hole)
+
+
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot10@data, {
+  ch4_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",   
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main="October 4th Ebullitive Gas Emissions",      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                    cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(gas~ebullitive~rate~(mL~ gas~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,50),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+
+  # add the lollipop points
+  ch4_plot$points3d(x=xcoord, y=ycoord, z=as.numeric(as.character(ebMlHrM2)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#99CCCC",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+\newpage
+
+October 4^th^ ebullitive methane emissions
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Methane ebullitive emissions from July 10^th^ - 11^th^ measured at the 15 sample sites within Acton Lake. The height of each "lollipop" corresponds to the emission rate shown on the vertical z-axis in units of milligrams CH~4~ per square meter of lake surface per hour. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot201710_84@data, {
+  ch4_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",  
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(October~4^{th}~2017~Methane~Ebullition),      # main plot title
+                                   xlab="Latitude",                                       # x-axis label 
+                                   ylab="",                                       # y-axis label
+                                 y.margin.add=0.5, 
+                                 #x.margin.add=0.5,
+                                 cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CH[4]~ebullitive~efflux~(mg~ CH[4]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,25),                            # range of z data shown 
+                                 labs.line.z=-0.5,
+                                 n.breaks.x=7,
+                                 x.pretty=FALSE,
+                                 x.sig=4,
+                                 y.pretty=FALSE,
+                                 y.sig=4,
+                                
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+  # reposition & add y-axis label
+  dims <- par("usr")                        # format of 'dims' is vector of: [xmin,xmax,ymin,ymax]
+  x <- dims[2] - 0.1*diff(dims[1:2])       # define x position of label
+  y <- dims[3] + 0.08*diff(dims[3:4])       # define y position of label. Lower number = lower down
+  text(x,y,"Longitude", srt=58)             # add label.  srt sets angle
+
+  # add the lollipop points
+  ch4_plot$points3d(x=long, y=lat, z=as.numeric(as.character(ch4.erate.mg.h)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#FF0000",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=1.5 #(sqrt(ch4.erate.mg.h)/10) + 1          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+\newpage
+October 4^th^ diffusive methane emissions
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Methane diffusive emissions from October 4^th^ - 5^th^ measured at the 15 sample sites within Acton Lake. *' }
+
+
+actonEqArea <- readOGR(dsn = globalWd, # get polygon
+                           layer = "actonEqArea",  # shapefile name
+                            verbose = FALSE)  #keep from reporting progress
+
+actonSitesPlot10@data <- merge(actonSitesPlot10@data, # add emission to point shp
+                             filter(eqAreaData, Lake_Name == "Acton Lake Oct") %>%
+                               select(ch4.drate.mg.h.best, siteID))
+
+# load external script (this is the scatterplot3d function, but changed a bit with to add more user control over style)
+source(paste(myWd, "/scriptsAndRmd/scatterplot3d_edit.R", sep = ""))
+
+# grab coordinates from polygon (in order to plot as a line on the xy plane of 3D plot)
+coords = fortify(actonEqArea)
+coords <- subset(coords, !hole)
+
+
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot10@data, {
+  ch4_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",   
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main="October 4th Diffusive Methane Emissions",      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                    cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CH[4]~diffusive~rate~(mg~ CH[4]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,25),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+
+  # add the lollipop points
+  ch4_plot$points3d(x=xcoord, y=ycoord, z=as.numeric(as.character(ch4.drate.mg.h.best)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#FF0000",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+\newpage
+
+October 4^th^ total methane emissions
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Methane ebullitive emissions from July 10^th^ - 11^th^ measured at the 15 sample sites within Acton Lake. The height of each "lollipop" corresponds to the emission rate shown on the vertical z-axis in units of milligrams CH~4~ per square meter of lake surface per hour. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot201710_84@data, {
+  ch4_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",  
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(October~4^{th}~2017~Methane~Efflux),      # main plot title
+                                   xlab="Latitude",                                       # x-axis label 
+                                   ylab="",                                       # y-axis label
+                                 y.margin.add=0.5, 
+                                 #x.margin.add=0.5,
+                                 cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CH[4]~total~efflux~(mg~ CH[4]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,25),                            # range of z data shown 
+                                 labs.line.z=-0.5,
+                                 n.breaks.x=7,
+                                 x.pretty=FALSE,
+                                 x.sig=4,
+                                 y.pretty=FALSE,
+                                 y.sig=4,
+                                
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+  # reposition & add y-axis label
+  dims <- par("usr")                        # format of 'dims' is vector of: [xmin,xmax,ymin,ymax]
+  x <- dims[2] - 0.1*diff(dims[1:2])       # define x position of label
+  y <- dims[3] + 0.08*diff(dims[3:4])       # define y position of label. Lower number = lower down
+  text(x,y,"Longitude", srt=58)             # add label.  srt sets angle
+
+  # add the lollipop points
+  ch4_plot$points3d(x=long, y=lat, z=as.numeric(as.character(ch4.trate.mg.h)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#660033",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=1.5 #(sqrt(ch4.erate.mg.h)/10) + 1          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+July 10^th^ ebullitive CO~2~ emissions  
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Carbon dioxide ebullitive emissions from July 10^th^ - 11^th^ measured at the 15 sample sites within Acton Lake. The height of each "lollipop" corresponds to the emission rate shown on the vertical z-axis in units of milligrams CH~4~ per square meter of lake surface per hour. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+
+
+actonEqArea <- readOGR(dsn = globalWd, # get polygon
+                           layer = "actonEqArea",  # shapefile name
+                            verbose = FALSE)  #keep from reporting progress
+
+actonSitesPlot07@data <- merge(actonSitesPlot07@data, # add emission to point shp
+                             filter(eqAreaData, Lake_Name == "Acton Lake") %>%
+                               select(co2.erate.mg.h, siteID))
+
+# load external script (this is the scatterplot3d function, but changed a bit with to add more user control over style)
+source(paste(myWd, "/scriptsAndRmd/scatterplot3d_edit.R", sep = ""))
+
+# grab coordinates from polygon (in order to plot as a line on the xy plane of 3D plot)
+coords = fortify(actonEqArea)
+coords <- subset(coords, !hole)
+
+
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot07@data, {
+  co2_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",   
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(July~Ebullitive~CO[2]~Emissions),      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                    cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CO[2]~ebullitive~rate~(mg~ CO[2]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,1),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+
+  # add the lollipop points
+  co2_plot$points3d(x=xcoord, y=ycoord, z=as.numeric(as.character(co2.erate.mg.h)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#0000FF",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+\newpage
+
+July 10^th^ diffusive CO~2~ uptake
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Carbon dioxide diffusive uptake from July 10^th^ - 11^th^ measured at the 15 sample sites within Acton Lake.*' }
+
+
+actonEqArea <- readOGR(dsn = globalWd, # get polygon
+                           layer = "actonEqArea",  # shapefile name
+                            verbose = FALSE)  #keep from reporting progress
+
+actonSitesPlot07@data <- merge(actonSitesPlot07@data, # add emission to point shp
+                             filter(eqAreaData, Lake_Name == "Acton Lake") %>%
+                               select(co2.drate.mg.h.best, siteID))
+
+# load external script (this is the scatterplot3d function, but changed a bit with to add more user control over style)
+source(paste(myWd, "/scriptsAndRmd/scatterplot3d_edit.R", sep = ""))
+
+# grab coordinates from polygon (in order to plot as a line on the xy plane of 3D plot)
+coords = fortify(actonEqArea)
+coords <- subset(coords, !hole)
+
+
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot07@data, {
+  co2_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",   
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(July~Diffusive~CO[2]~Uptake),      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                    cex.axis =0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CO[2]~diffusive~rate~(mg~ CO[2]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,125),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+
+  # add the lollipop points
+  co2_plot$points3d(x=xcoord, y=ycoord, z=(as.numeric(as.character(co2.drate.mg.h.best))*-1), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#0000FF",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+\newpage
+
+August 31^st^ ebullitive CO~2~ emissions 
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Carbon dioxide ebullitive emissions from August 31^st^ - Sept 1^st^ measured at the 15 sample sites within Acton Lake.*' }
+
+
+actonEqArea <- readOGR(dsn = globalWd, # get polygon
+                           layer = "actonEqArea",  # shapefile name
+                            verbose = FALSE)  #keep from reporting progress
+
+actonSitesPlot08@data <- merge(actonSitesPlot08@data, # add emission to point shp
+                             filter(eqAreaData, Lake_Name == "Acton Lake Aug") %>%
+                               select(co2.erate.mg.h, siteID))
+
+# load external script (this is the scatterplot3d function, but changed a bit with to add more user control over style)
+source(paste(myWd, "/scriptsAndRmd/scatterplot3d_edit.R", sep = ""))
+
+# grab coordinates from polygon (in order to plot as a line on the xy plane of 3D plot)
+coords = fortify(actonEqArea)
+coords <- subset(coords, !hole)
+
+
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot08@data, {
+  co2_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",   
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(August~31^{st}~Ebullitive~CO[2]~Emissions),      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                    cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CO[2]~ebullitive~rate~(mg~ CO[2]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,1),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+
+  # add the lollipop points
+  co2_plot$points3d(x=xcoord, y=ycoord, z=as.numeric(as.character(co2.erate.mg.h)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#0000FF",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+\newpage
+
+August 31^st^ diffusive CO~2~ uptake
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Carbon dioxide diffusive emissions from August 31^st^ - Sept 1^st^ measured at the 15 sample sites within Acton Lake.*' }
+
+
+actonEqArea <- readOGR(dsn = globalWd, # get polygon
+                           layer = "actonEqArea",  # shapefile name
+                            verbose = FALSE)  #keep from reporting progress
+
+actonSitesPlot08@data <- merge(actonSitesPlot08@data, # add emission to point shp
+                             filter(eqAreaData, Lake_Name == "Acton Lake Aug") %>%
+                               select(co2.drate.mg.h.best, siteID))
+
+# load external script (this is the scatterplot3d function, but changed a bit with to add more user control over style)
+source(paste(myWd, "/scriptsAndRmd/scatterplot3d_edit.R", sep = ""))
+
+# grab coordinates from polygon (in order to plot as a line on the xy plane of 3D plot)
+coords = fortify(actonEqArea)
+coords <- subset(coords, !hole)
+
+
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot08@data, {
+  co2_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",   
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(August~31^{st}~Diffusive~CO[2]~Uptake),      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                    cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CO[2]~diffusive~rate~(mg~ CO[2]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,125),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+
+  # add the lollipop points
+  co2_plot$points3d(x=xcoord, y=ycoord, z=(as.numeric(as.character(co2.drate.mg.h.best))*-1), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#0000FF",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+\newpage
+
+October 4^th^ volumetric gas emissions
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Gas ebullitive emissions from October 4^th^ - 5^th^ measured at the 15 sample sites within Acton Lake.*' }
+
+
+actonEqArea <- readOGR(dsn = globalWd, # get polygon
+                           layer = "actonEqArea",  # shapefile name
+                            verbose = FALSE)  #keep from reporting progress
+
+actonSitesPlot10@data <- merge(actonSitesPlot10@data, # add emission to point shp
+                             filter(eqAreaData, Lake_Name == "Acton Lake Oct") %>%
+                               select(co2.erate.mg.h, siteID))
+
+# load external script (this is the scatterplot3d function, but changed a bit with to add more user control over style)
+source(paste(myWd, "/scriptsAndRmd/scatterplot3d_edit.R", sep = ""))
+
+# grab coordinates from polygon (in order to plot as a line on the xy plane of 3D plot)
+coords = fortify(actonEqArea)
+coords <- subset(coords, !hole)
+
+
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot10@data, {
+  ch4_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",  
+                                  angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(October~4^{th}~Ebullitive~Gas~Emissions),      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                    cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(Gas~ebullitive~rate~(mL~ gas~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,1),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+
+  # add the lollipop points
+  ch4_plot$points3d(x=xcoord, y=ycoord, z=as.numeric(as.character(co2.erate.mg.h)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#0000FF",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+\newpage
+
+October 4^th^ diffusive CO~2~ uptake
+
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Carbon dioxide diffusive emissions from October 4^th^ - 5^th^ measured at the 15 sample sites within Acton Lake. *' }
+
+
+actonEqArea <- readOGR(dsn = globalWd, # get polygon
+                           layer = "actonEqArea",  # shapefile name
+                            verbose = FALSE)  #keep from reporting progress
+
+actonSitesPlot10@data <- merge(actonSitesPlot10@data, # add emission to point shp
+                             filter(eqAreaData, Lake_Name == "Acton Lake Oct") %>%
+                               select(co2.drate.mg.h.best, siteID))
+
+# load external script (this is the scatterplot3d function, but changed a bit with to add more user control over style)
+source(paste(myWd, "/scriptsAndRmd/scatterplot3d_edit.R", sep = ""))
+
+# grab coordinates from polygon (in order to plot as a line on the xy plane of 3D plot)
+coords = fortify(actonEqArea)
+coords <- subset(coords, !hole)
+
+
+
+##########################################################################
+### Total CH4 emission rate
+with(actonSitesPlot10@data, {
+  co2_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",   
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   
+                                 scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(October~4^{th}~Diffusive~CO[2]~Uptake),      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                    cex.axis = 0.9, 
+                                 # cex.axis = 1.3,
+                                   cex.lab = 1.1,
+                                 #cex.lab = 2,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=expression(CO[2]~diffusive~rate~(mg~ CO[2]~ m^{-2}~ hr^{-1})),                      # z-axis label
+                                   zlim=range(0,125),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   tick.marks = TRUE,
+                                  label.tick.marks = TRUE,   #whether or not to include tick mark labels for all three axes
+                                 x.ticklabs=NULL,
+                                 y.ticklabs=NULL,
+                                 
+                                 grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+                                    
+                                 )
+  
+
+  # add the lollipop points
+  co2_plot$points3d(x=xcoord, y=ycoord, z=(as.numeric(as.character(co2.drate.mg.h.best))*-1), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#0000FF",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+\newpage
+
+Similarly, chlorophyll a concentrations in Acton Lake did not show a clear difference between upstream and downstream sites.  
+
+Chla July
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Chlorophyll a concentrations measured at the 15 sample sites within Acton Lake in July. The height of each "lollipop" corresponds to the concentration shown on the vertical z-axis in units of micrograms per liter of water. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+##########################################################################
+### chlorophyll plot
+
+
+with(actonSitesPlot07@data, {
+  chl_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",   
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main="July 10th Chl a Levels",      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                   cex.axis = 0.9,
+                                   cex.lab = 1.1,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=(expression(chlorophyll~a~paste("(", {mu}, "g ", L^{-1}, ")", sep = ""))),                      # z-axis label
+                                   zlim=range(0, 45),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+  )
+  
+
+  # add the lollipop points
+  chl_plot$points3d(x=xcoord, y=ycoord, z=as.numeric(as.character(chla_S)), # x y and z data
+  #chl_plot$points3d(x=xcoord, y=ycoord, z=chla_num, # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#339966",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+Chla Aug
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Chlorophyll a concentrations measured at the 15 sample sites within Acton Lake in August. The height of each "lollipop" corresponds to the concentration shown on the vertical z-axis in units of micrograms per liter of water. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+##########################################################################
+### chlorophyll plot
+
+
+
+with(actonSitesPlot08@data, {
+  chl_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",   
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main="August 31st Chl a Levels",      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                   cex.axis = 0.9,
+                                   cex.lab = 1.1,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=(expression(chlorophyll~a~paste("(", {mu}, "g ", L^{-1}, ")", sep = ""))),                      # z-axis label
+                                   zlim=range(0, 45),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+  )
+  
+
+  # add the lollipop points
+  chl_plot$points3d(x=xcoord, y=ycoord, z=as.numeric(as.character(chla_S)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#339966",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+Chla Oct
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Chlorophyll a concentrations measured at the 15 sample sites within Acton Lake in October. The height of each "lollipop" corresponds to the concentration shown on the vertical z-axis in units of micrograms per liter of water. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+##########################################################################
+### chlorophyll plot
+
+
+with(actonSitesPlot10@data, {
+  chl_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                 fill="light blue",   
+                                 angle=40,                                      # angle aspect of plot (-40)
+                                   scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main="October 4th Chl a Levels",      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                   cex.axis = 0.9,
+                                   cex.lab = 1.1,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=(expression(chlorophyll~a~paste("(", {mu}, "g ", L^{-1}, ")", sep = ""))),                      # z-axis label
+                                   zlim=range(0, 45),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+  )
+  
+
+  # add the lollipop points
+  chl_plot$points3d(x=xcoord, y=ycoord, z=as.numeric(as.character(chla_S)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#339966",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+\newpage
+
+Turbidity July
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Chlorophyll a concentrations measured at the 15 sample sites within Acton Lake in July. The height of each "lollipop" corresponds to the concentration shown on the vertical z-axis in units of micrograms per liter of water. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+##########################################################################
+### turbidity plot
+
+
+with(actonSitesPlot07@data, {
+  turb_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                  fill="light blue",  
+                                  angle=40,                                      # angle aspect of plot (-40)
+                                   scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(July~10^{th}~Turbidity),      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                   cex.axis = 0.9,
+                                   cex.lab = 1.1,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=(expression(turbidity~paste("(", "NTU" ,")", sep = ""))),                      # z-axis label
+                                   zlim=range(0, 45),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+  )
+  
+
+  # add the lollipop points
+  turb_plot$points3d(x=xcoord, y=ycoord, z=as.numeric(as.character(TrNTU_S)), # x y and z data
+  #chl_plot$points3d(x=xcoord, y=ycoord, z=chla_num, # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#993300",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+Turbidity Aug
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Chlorophyll a concentrations measured at the 15 sample sites within Acton Lake in August. The height of each "lollipop" corresponds to the concentration shown on the vertical z-axis in units of micrograms per liter of water. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+##########################################################################
+### turbidity plot
+
+
+
+with(actonSitesPlot08@data, {
+  turb_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                  fill="light blue",  
+                                  angle=40,                                      # angle aspect of plot (-40)
+                                   scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=expression(August~31^{st}~Turbidity),      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                   cex.axis = 0.9,
+                                   cex.lab = 1.1,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=(expression(turbidity~paste("(", "NTU" ,")", sep = ""))),                      # z-axis label
+                                   zlim=range(0, 45),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+  )
+  
+
+  # add the lollipop points
+  turb_plot$points3d(x=xcoord, y=ycoord, z=as.numeric(as.character(TrNTU_S)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#993300",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+Turbidity Oct
+```{r echo=FALSE, warning=F, message=F, error=F, fig.width=7, fig.height=7, fig.cap='*Chlorophyll a concentrations measured at the 15 sample sites within Acton Lake in October. The height of each "lollipop" corresponds to the concentration shown on the vertical z-axis in units of micrograms per liter of water. The x- and y-axes are oriented east-west and north-south, respectively.*' }
+##########################################################################
+### Turbidity plot
+
+
+with(actonSitesPlot10@data, {
+  turb_plot <- scatterplot3d_edit(x=coords$long, y=coords$lat, z=rep(0,length(coords$long)),   # x y and z data, respectively
+                                   color="#282830",                               # color of lake outline
+                                   lwd=2.0,                                       # line width of lake outline
+                                   type="l",                                      # plot type - "l" = line, "h" = the lollipop style with a line  connecting to the horizontal plane 
+                                  fill="light blue",  
+                                  angle=40,                                      # angle aspect of plot (-40)
+                                   scale.y=0.5,                                   # scale y axis (increase by 175% (1.75))
+                                   main=(October~4^{th}~Turbidity),      # main plot title
+                                   xlab="",                                       # x-axis label (left blank here to reposition later)
+                                   ylab="",                                       # y-axis label
+                                   cex.axis = 0.9,
+                                   cex.lab = 1.1,
+                                   mar = c(5,6,4,2)+0.1,
+                                   zlab=(expression(turbidity~paste("(", "NTU" ,")", sep = ""))),                      # z-axis label
+                                   zlim=range(0, 45),                            # range of z data shown - I grabbed the max from previously plotting the methane data here. Set so when I add the points, the z-axis fits that data. 
+                                   lty.axis=1,                                    # the line type of the axes
+                                   axis=TRUE,                                     # wheather to include axes
+                                   grid=c('xy','xz','yz'),                        # which grids to show - added to edited version of scatterplot3d fx
+                                   lty.grid.xy = 1,                               # grid line type  
+                                   lty.grid.xz = 3,
+                                   lty.grid.yz = 3,
+                                   lwd.grid.xy = 1,                               # line width of grid 
+                                   lwd.grid.xz = 1,
+                                   lwd.grid.yz = 1,
+                                   box=FALSE                                      # get rid of the box around the plot
+  )
+  
+
+  # add the lollipop points
+  turb_plot$points3d(x=xcoord, y=ycoord, z=as.numeric(as.character(TrNTU_S)), # x y and z data
+                      col="#282830",                      # color of lines connecting points to lake outline
+                      lwd=1.5,                            # line width of lines connecting points to lake outline
+                      pch=21,                             # type of point to plot
+                      bg="#993300",                       # fill color of points
+                      type="h",                           # plot type = lines to the horizontal plane
+                      cex=2 #(vRateBest/500) + 0.5          # scaling of point sizes - this will need to be adjusted for each variable
+  )
+})
+```
+
+\newpage
+
+\blandscape
+
+## 5. Tables of measured values at each site  
+
+Table 1: Surface (0.1 m) water quality parameters measured via sonde at each site on July 10^th^
+
+```{r warning=FALSE, echo=FALSE}
+######################################################################
+#### Item #5: Table of Water Quality Values by Site
+## work in progress. Goal: produce a table for each lake with water quality and 
+## GHG emissions info, including data that was not in the plots. Need to isolate
+## the relevant data for each lake, rename the column headings, and add units
+
+# dplyr package 
+#"filter" command filters rows of interest. We're filtering the dataset for the 
+# sampled sites at a given lake.
+#"select" command selects the columns we want to show. The order they are listed 
+#in the () is the order they will appear
+#used info from http://j-wang.blogspot.com/2015/03/landscape-and-portrait-in-rmarkdown.html to orient table pages as landscape
+actonTableSonde <- filter(eqAreaData, Lake_Name == "Acton Lake", 
+                      EvalStatus == "sampled") %>%
+                select(siteID, LatSamp, LongSmp,  #site identification  
+                chla_S, DO__L_S,  pH_S, SpCn__S, Tmp_C_S,  TrNTU_S) #shallow sonde
+
+kable(actonTableSonde,
+      align = "c",
+      digits = c(1,5,5,1,1,1,0,1,1),
+      col.names = c("Site ID", "Latitude", "Longitude",
+                    "Chl a (ug/L)", "DO (mg/L)", "pH",
+                    "Sp. Cond", "Water Temp (C)", 
+                    "Turbidity"))
+```
+
+
+Table 2: Surface (0.1 m) water quality parameters measured via sonde at each site on August 31^st^
+
+```{r warning=FALSE, echo=FALSE}
+######################################################################
+#### Item #5: Table of Water Quality Values by Site
+## work in progress. Goal: produce a table for each lake with water quality and 
+## GHG emissions info, including data that was not in the plots. Need to isolate
+## the relevant data for each lake, rename the column headings, and add units
+
+# dplyr package 
+#"filter" command filters rows of interest. We're filtering the dataset for the 
+# sampled sites at a given lake.
+#"select" command selects the columns we want to show. The order they are listed 
+#in the () is the order they will appear
+#used info from http://j-wang.blogspot.com/2015/03/landscape-and-portrait-in-rmarkdown.html to orient table pages as landscape
+actonTableSonde <- filter(eqAreaData, Lake_Name == "Acton Lake Aug", 
+                      EvalStatus == "sampled") %>%
+                select(siteID, LatSamp, LongSmp,  #site identification  
+                chla_S, DO__L_S,  pH_S, SpCn__S, Tmp_C_S,  TrNTU_S) #shallow sonde
+
+kable(actonTableSonde,
+      align = "c",
+      digits = c(1,5,5,1,1,1,0,1,1),
+      col.names = c("Site ID", "Latitude", "Longitude",
+                    "Chl a (ug/L)", "DO (mg/L)", "pH",
+                    "Sp. Cond", "Water Temp (C)", 
+                    "Turbidity"))
+```
+
+
+Table 3: Surface (0.1 m) water quality parameters measured via sonde at each site on October 4^th^
+
+```{r warning=FALSE, echo=FALSE}
+######################################################################
+#### Item #5: Table of Water Quality Values by Site
+## work in progress. Goal: produce a table for each lake with water quality and 
+## GHG emissions info, including data that was not in the plots. Need to isolate
+## the relevant data for each lake, rename the column headings, and add units
+
+# dplyr package 
+#"filter" command filters rows of interest. We're filtering the dataset for the 
+# sampled sites at a given lake.
+#"select" command selects the columns we want to show. The order they are listed 
+#in the () is the order they will appear
+#used info from http://j-wang.blogspot.com/2015/03/landscape-and-portrait-in-rmarkdown.html to orient table pages as landscape
+actonTableSonde <- filter(eqAreaData, Lake_Name == "Acton Lake Oct", 
+                      EvalStatus == "sampled") %>%
+                select(siteID, LatSamp, LongSmp,  #site identification  
+                chla_S, DO__L_S,  pH_S, SpCn__S, Tmp_C_S,  TrNTU_S) #shallow sonde
+
+kable(actonTableSonde,
+      align = "c",
+      digits = c(1,5,5,1,1,1,0,1,1),
+      col.names = c("Site ID", "Latitude", "Longitude",
+                    "Chl a (ug/L)", "DO (mg/L)", "pH",
+                    "Sp. Cond", "Water Temp (C)", 
+                    "Turbidity"))
+```
+
+
+
+\elandscape
+
+## 6.  EPA disclaimer
+
+The U.S. Environmental Protection Agency, through its Office of Research and Development, participated in the research described herein. It has been subjected to the Agency's administrative review and has been approved for limited external distribution. Any opinions expressed in this article are those of the authors and do not necessarily reflect the views of the Agency, therefore, no official endorsement should be inferred. Any mention of trade names or commercial products does not constitute endorsement or recommendation for use.

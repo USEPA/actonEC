@@ -225,8 +225,7 @@ start.time;Sys.time()
 # STEP 2: USE AIC TO DETERMINE WHETHER LINEAR OR NON-LINEAR FIT IS BEST.
 #         CONFIRM CHOICE BY INSPECTING RAW DATA
 # Choose best rate.  Just use AIC
-# Cowan lake manual syringe sample data wouldn't support ex model.
-# Include is.na(ex.aic) to accomodate this.
+# Include is.na(ex.aic) to accomodate any that won't support ex() model.
 OUT <- mutate(OUT, 
               co2.best.model = ifelse(co2.lm.aic < co2.ex.aic | is.na(co2.ex.aic), 
                                       "linear", "exponential"),
@@ -275,8 +274,7 @@ plot(with(OUT[!is.na(OUT$ch4.drate.mg.h.best),],
 # STEP 3: MERGE DIFFUSION RATES WITH eqAreaData
 # First, strip NA from OUT
 OUT <- filter(OUT, !is.na(Sample_Time)) # Just one NA slipped in
-chamDataTest<-chamData[,1:5]
-chamData <- merge(chamDataTest, OUT, by.x = c("dateTimeSampled", "siteID"), 
+chamData <- merge(chamData, OUT, by.x = c("dateTimeSampled", "siteID"), 
                   by.y = c("Sample_Time", "site"), all=TRUE)
 
 str(chamData) # 66 observations
@@ -322,9 +320,8 @@ ggplot(filter(chamData, !is.na(year)), aes(monthday, ch4.drate.mg.h.best))+
                    name="Date")+
   facet_grid(year~.)
 
-#subset data to write to a table for Tom and Tanner
-chamDataSub<-select(chamData, chmDeplyDtTm, siteID, co2.drate.mg.h.best, ch4.drate.mg.h.best, year)%>%
-  filter(!is.na(co2.drate.mg.h.best))
+#subset data with what will be used in plotting:
+chamDataSub<-select(chamData, chmDeplyDtTm, siteID, ch4.drate.mg.h.best, monthday, year)
 
 write.table(chamDataSub,
             file="dataL2/chamberFluxes.csv",

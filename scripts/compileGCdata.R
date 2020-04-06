@@ -23,6 +23,8 @@ gc.all.NonGrts$sampleNum<-substring(gc.all.NonGrts$sample, 4)
 gc.Acton<-dplyr::filter(gc.all.NonGrts, grepl("ACT",sample)) #346 obs
 #864 obs 12/21/2018
 
+rm(gc.all.NonGrts, gc.all.NonGrts.2017, gc.all.NonGrts.2018)
+
 ## Check for duplicates.
 filter(gc.Acton, duplicated(sample,fromLast = TRUE) | duplicated(sample,fromLast = FALSE)) %>% 
   arrange(sample)
@@ -142,6 +144,7 @@ xtrCodes2018 <- select(metaDataTrapAct, site, site.visit.date, exetainer.code)%>
 xtrCodes2017 <- tidyr::separate(xtrCodes2017, exetainer.code, into = c("tp.xtr.1", "tp.xtr.2", "tp.xtr.3"), sep = ", ")
 xtrCodes2018 <- tidyr::separate(xtrCodes2018, exetainer.code, into = c("tp.xtr.1", "tp.xtr.2", "tp.xtr.3"), sep = ",")
 xtrCodes<-rbind(xtrCodes2017, xtrCodes2018)
+rm(xtrCodes2017, xtrCodes2018)
 xtrCodes$site.visit.date<-as.character(xtrCodes$site.visit.date)
 #was getting an error using the melt command, turns out xtrCodes wasn't a dataframe:
 #https://stackoverflow.com/questions/16941111/r-cannot-melt-data-frame/35500964
@@ -182,6 +185,7 @@ actonDgJoin<-left_join(metaDataDGact, gc.Acton, by="sample") #2/22/18, 312 obser
 #xtrCodes is the melted info from metaDataTrapAct
 
 actonTrapJoin<-merge(xtrCodes.m, gc.Acton, by.x="value", by.y="sample")#3/19/18, 72 obs; after fixing trap data sheet: 80 obs
+rm(xtrCodes, xtrCodes.m)
 #12/20/18: 118 obs
 #04/09/19: 153 obs
 #site.visit.date is a character from using it in melt, create Rdate and change to a date
@@ -232,6 +236,31 @@ actonTrapAgg<-actonTrapAgg%>%
          monthday = format(Rdate, format="%m-%d"))
 actonTrapAgg$monthday<-as.Date(actonTrapAgg$monthday, format="%m-%d")
 
+#### On 2017-08-31, gas was collected from two traps: the AFT and a passive trap. I believe we 
+#### were testing the aluminum funnels?
+#### The AFT [CH4] were 69% and 70%, while the passive trap [CH4] were 30%, 31%, and 49%.
+#### It's tempting to throw out the passive trap results, but there are two reasons this is not a good thing to do:
+#### 1 -- the two traps were co-located, and there is no reason to believe that the passive trap 
+#### would be somehow biased
+#### 2 -- the AFT results from 2017-08-24 also spread this range: 62%, 45%, 40%
+#### let's reduce the sd by pooling these two dates -- will do in the compileGCdata.R script
+
+actonTrapAgg2<-actonTrapJoin%>%
+  mutate(Rdate = replace(Rdate, Rdate == "2017-08-31" & site == "u12", "2017-08-24"))%>%
+  group_by(Rdate, site) %>%
+  dplyr::summarize(meanCH4 = mean(ch4.ppm),
+                   meanCO2 = mean(co2.ppm),
+                   meanN2O = mean(n2o.ppm),
+                   sdCH4 = sd(ch4.ppm),
+                   sdCO2 = sd(co2.ppm),
+                   sdN2O = sd(n2o.ppm))
+actonTrapAgg2$SiteDesc<-ifelse(actonTrapAgg2$site == "u12", "deep", "shallow")
+actonTrapAgg2<-actonTrapAgg2%>%
+  mutate(year = year(Rdate),
+         monthday = format(Rdate, format="%m-%d"))
+actonTrapAgg2$monthday<-as.Date(actonTrapAgg2$monthday, format="%m-%d")
+
+
 ## Same as time series above, but with mean and sd values
 ggplot(actonTrapAgg, aes(monthday, meanCH4/10000))+
   geom_jitter(aes(color=SiteDesc))+
@@ -243,7 +272,17 @@ ggplot(actonTrapAgg, aes(monthday, meanCH4/10000))+
   ylim(0, 100)+
   theme_bw()
 
-write.table(actonTrapAgg,
+ggplot(actonTrapAgg2, aes(monthday, meanCH4/10000))+
+  geom_jitter(aes(color=SiteDesc))+
+  geom_errorbar(aes(color=SiteDesc, ymin=((meanCH4-sdCH4)/10000), ymax =((meanCH4+sdCH4)/10000)))+
+  scale_x_date(date_breaks = "1 month", date_labels="%b-%d")+
+  facet_grid(year~.)+
+  theme(axis.text.x=element_text(angle=60, hjust=1))+
+  labs(x = "Date", y = "Trap Gas %CH4")+
+  ylim(0, 100)+
+  theme_bw()
+
+write.table(actonTrapAgg2,
             file="dataL2/actonTrapAgg.csv",
             sep=",",
             row.names=FALSE)

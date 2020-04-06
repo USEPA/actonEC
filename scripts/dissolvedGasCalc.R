@@ -168,8 +168,7 @@ write.table(actonDGoutput,
             sep=",",
             row.names=FALSE)
 
-#rm(actonDG, actonDGair, actonDGinput, actonDgJoin, airMeans, 
-#   dockAmbientAir, gc.Acton, gc.all.NonGrts)
+rm(actonDG, actonDGair, actonDGinput, actonDgJoin, airMeans, gc.Acton)
 
 ##############################################
 #######Calculate k_600########################
@@ -240,11 +239,6 @@ r1<-0.04
 actonDGoutputT<-as.data.frame(actonDGoutput)
 metaDataSondeT<-as.data.frame(metaDataSonde)
 
-test<-left_join(actonDGoutputT, metaDataSondeT, by="sample.date")
-
-
-
-
 ###Calculate Fluxes:
 #Let's think about units: dissolvedGAS and satGAS are in units of mol/L [M]
 #k600 is in units of cm/hr (Cole and Caraco)
@@ -286,4 +280,4 @@ ggplot(actonDGfluxes, aes(sample.date, meanCO2Flux))+
   geom_errorbar(aes(ymax = meanCO2Flux+sdCO2Flux, 
                     ymin = meanCO2Flux-sdCO2Flux,
                     color=site))
-
+rm(epOutWind, dailyWind)

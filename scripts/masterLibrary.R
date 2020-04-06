@@ -119,12 +119,12 @@ grtsMeanVariance <- function(x) {
   
   # CALCULATE CDF ESTIMATES
   if(length(unique(x$stratum)) == 1) {  # if unstratified
-    cdf.final <- cont.analysis(sites, subpop, design, data.cont,
+    cdf.final <- spsurvey::cont.analysis(sites, subpop, design, data.cont,
                                popsize=list(lake=sum(framesize)))
   }
   
   if(length(unique(x$stratum)) > 1) {  # if stratified
-    cdf.final <- cont.analysis(sites, subpop, design, data.cont,
+    cdf.final <- spsurvey::cont.analysis(sites, subpop, design, data.cont,
                                popsize=list(lake=sum(framesize),
                                             stratum=as.list(framesize)))
   }

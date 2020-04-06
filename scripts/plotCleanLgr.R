@@ -25,8 +25,10 @@ chamData1718 <- mutate(chamData1718,
 
 chamDataL<-list()
 chamDataL[[1]]<-select(chamData1718, -chmStTm, -chm_vol)
+rm(chamData1718)
 
 chamData<-do.call("rbind", chamDataL)
+rm(chamDataL)
 
 chamData<-chamData%>%
   mutate(siteID = replace(siteID, siteID=="u12", "U-12"),
