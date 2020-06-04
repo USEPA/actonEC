@@ -72,9 +72,9 @@ source("scripts/qcECfluxes.R")
 
 file.edit("scripts/plotTimeSeries.R")
 file.edit("scripts/metPlotsFig3.R")
-file.edit('scriptsAndRmd/fluxTmprPlots.R')
-## Multi-panel plots showing Q10 and 2DKS
 file.edit("scripts/plotCumulativeTS.R")
+file.edit('scriptsAndRmd/fluxTmprPlots.R')
+  ## Multi-panel plots showing Q10 and 2DKS
 file.edit("scripts/calcsForTable2.R")
 
 #remove non longer needed data frames and lists:

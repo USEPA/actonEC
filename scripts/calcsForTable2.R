@@ -117,9 +117,10 @@ mean(sb2017$ch4.trate)
 sd(sb2017$ch4.trate)
 
 
-
+total2017<-DailyANNFluxes$ch4.t_cumu[which(grepl("2017-12-31",DailyANNFluxes$date))]
 ws2017<-DailyANNFluxes$ch4.t_cumu[which(grepl("2017-10-01",DailyANNFluxes$date))]-
   DailyANNFluxes$ch4.t_cumu[which(grepl("2017-05-01",DailyANNFluxes$date))]
+warmSeasFrac<-ws2017/total2017
 ws2017L<-DailyANNFluxes$ch4.t_cumuL95[which(grepl("2017-10-01",DailyANNFluxes$date))]-
   DailyANNFluxes$ch4.t_cumuL95[which(grepl("2017-05-01",DailyANNFluxes$date))]
 ws2017U<-DailyANNFluxes$ch4.t_cumuU95[which(grepl("2017-10-01",DailyANNFluxes$date))]-
@@ -128,8 +129,10 @@ ndays<-as.numeric(DailyANNFluxes$date[which(grepl("2017-10-01",
                                                   DailyANNFluxes$date))]-
                     DailyANNFluxes$date[which(grepl("2017-05-01",
                                                     DailyANNFluxes$date))])
+total2018<-max(DailyANNFluxes$ch4.t_cumu)-total2017
 ws2018<-DailyANNFluxes$ch4.t_cumu[which(grepl("2018-10-01",DailyANNFluxes$date))]-
   DailyANNFluxes$ch4.t_cumu[which(grepl("2018-05-01",DailyANNFluxes$date))]
+ws2018/total2018
 ws2018L<-DailyANNFluxes$ch4.t_cumuL95[which(grepl("2018-10-01",DailyANNFluxes$date))]-
   DailyANNFluxes$ch4.t_cumuL95[which(grepl("2018-05-01",DailyANNFluxes$date))]
 print(paste("Mean Warm Season Fluxes 2017", 
