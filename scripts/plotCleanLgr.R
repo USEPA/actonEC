@@ -267,7 +267,7 @@ dev.off()
 #should be 2 * number of site visits
 #only takes < 1 min
 
-
+rm(plot.i, plot.ii)
 
 
 

@@ -53,9 +53,8 @@ actonDG<-filter(actonDgJoin, sample.type=="dg")
 #unique sampling date and site
 actonDGair<-left_join(actonDG, airMeans, by=c("sample.date", "site"))
 
-##Gap-filling within R:
-#these fields should really be gap-filled by looking back at weather station data
-#but for now, here's approximations:
+##Gap-filling barometric pressure: 
+
 actonDGair$BPfilled<-actonDGair$bp.mm.hg*101.325/760 #convert from mmHg to kPa
 actonDGair$BPfilled<-replace(actonDGair$BPfilled, is.na(actonDGair$BPfilled), 101.325)
 
@@ -134,7 +133,7 @@ actonDGoutputAvg<-actonDGoutput%>%
   group_by(site, sample.date, sampleDepthFactor)%>%
   dplyr::summarize(meanDissCH4 = mean(dissolvedCH4, na.rm=TRUE),
                    sdDissCH4 = sd(dissolvedCH4, na.rm=TRUE))
-#deep site: 
+#deep site: SI Figure S4
 ggplot(filter(actonDGoutputAvg, site=="u12", meanDissCH4<0.0025), 
        aes(sample.date, meanDissCH4*10^6))+
   geom_point(alpha=0.5)+
@@ -170,114 +169,4 @@ write.table(actonDGoutput,
 
 rm(actonDG, actonDGair, actonDGinput, actonDgJoin, airMeans, gc.Acton)
 
-##############################################
-#######Calculate k_600########################
-############################################
 
-##Start with simple equation: k_600=2.07+0.215*U_10^1.7
-#take average of wind speed for mid-day winds: 10:00 - 14:00
-epOutWind<-select(epOutOrder, date, time, RDateTime, wind_speed)
-epOutWind$time<-as.POSIXct(epOutWind$time, format("%H:%M"), tz="UTC")
-epOutWind$timeNum<-as.numeric(epOutWind$time)
-today<-as.numeric(as.POSIXct(Sys.Date(), tz="UTC"))
-epOutWind$timeNum<-(epOutWind$timeNum-today)/(60*60) #now in format of hour of day
-
-epOutWind<-filter(epOutWind, timeNum>10 & timeNum<14)
-epOutWind$date<-as.Date(epOutWind$date, format = "%m/%d/%Y")
-
-dailyWind<-epOutWind %>%
-  group_by(date) %>%
-  dplyr::summarize(meanWind = (mean(wind_speed, na.rm=TRUE)))
-dailyWind$meanWind10<-dailyWind$meanWind*(10/2.8)^0.1 #log wid profile
-dailyWind$k600<-2.07+0.215*dailyWind$meanWind10^1.7
-
-ggplot(dailyWind, aes(date, k600))+
-  geom_point()
-dailyWind$sample.date<-dailyWind$date
-actonDGoutput<-left_join(actonDGoutput, dailyWind, by="sample.date")
-
-###Since Acton surface waters have pH >8, we should apply 
-###the pH enhancement (see Knoll et al., 2013): k_enh=alpha*k
-
-##From Wanninkhof et al., 1996:
-## alpha = T/[(T-1)+tanh(Qz)/(Qz)]
-# Q=(rTD^-1)^0.5  (cm^-1)
-# r=r1+r2K'_w*a_H^-1  (s-1)
-# T=1+a_H^2(K'_1*K'_2+K'_1*a_H)^-1
-# z=Dk^-1 (stagnant coundary layer thickness, cm) 
-# r1=rate constant for CO2 + H2O = H2CO3, ~0.04 s-1 at 25 deg C (http://www.aqion.de/site/carbonic-acid-kinetics)
-# r2=rate constant for CO2 + OH- = HCO3-, aka k_OH- in Johnson, 6900 M-1s-1
-# K'_w=apparent dissociation constant for H2O
-# a_H=activity coefficient for H+
-# K'_1 and K'_2 = first and second apparent dissociation constants for carbonic acid
-# D= molecular diffusion coeffiencient for CO2
-
-##going from the bottom up:
-
-##D at 298 K is ~ 2.2 *10^-9 m^2s^-1. In units of cm^2/s^-1, that would be 2.2 * 10^-5 cm2s-1 (https://pubs.acs.org/doi/full/10.1021/je401008s)
-molecDiff<-2.2*10^-5
-
-##From Dickson and Millero, 1987, K'_1 and K'_2 when salinity ~0
-#(https://ac.els-cdn.com/0198014987900215/1-s2.0-0198014987900215-main.pdf?_tid=91931f19-3df8-4cd2-be0b-9d6587cea684&acdnat=1531935681_ef4d2db263d7b0f6ca3ed21b1ae1b8b8)
-#-log(K_1) ~= 6320.81/T - 126.3405 + 19.568*ln(T)
-#-log(K_2) ~= 5143.69/T - 90.1833 + 14.613*ln(T) where T is temperature in K
-##aH is a function of pH:
-metaDataSonde<-mutate(metaDataSonde,
-                      pK1 = 6320.81/Temp.K - 126.3405 + 19.568*log(Temp.K),
-                      pK2 = 5143.69/Temp.K - 90.1833 + 14.613*log(Temp.K),
-                      K1 = (10^(pK1)^-1), # pH = -log(aH)=log(1/aH) <--> 10^pH = 1/aH <--> aH = 1/10^pH
-                      K2 = (10^(pK2)^-1),
-                      aH = 1/10^(pH),
-                      sample.date = as.Date(Sample.Date),
-                      sampleID = Site)
-
-#dissociation costant for water at 25 degrees C is 1.023*10^-14 (https://en.wikipedia.org/wiki/Dissociation_constant)
-Kw<-1.023*10^-14
-r2<-6900
-r1<-0.04
-
-actonDGoutputT<-as.data.frame(actonDGoutput)
-metaDataSondeT<-as.data.frame(metaDataSonde)
-
-###Calculate Fluxes:
-#Let's think about units: dissolvedGAS and satGAS are in units of mol/L [M]
-#k600 is in units of cm/hr (Cole and Caraco)
-#want fluxes in units of mg/m2/hr
-#the unit mol/L is equivalent to mmol/mL or mmol/cm^3 
-#multiply by 100^2 to convert from cm^-2 to m^-2
-#multiply by the molar mass to convert from mmol to mg
-actonDGoutput<-actonDGoutput%>%
-  mutate(ch4DGflux=deltaCH4*k600*100^2*16,
-         co2DGflux=deltaCO2*k600*100^2*44,
-         n2oDGflux=deltaN2O*k600*100^2*44)
-
-ggplot(filter(actonDGoutput, sample.depth.m==0.1 & site=="dock"), aes(sample.date, co2DGflux))+
-  geom_point(aes(color=site))
-
-##Aggregate by date and site
-actonDGfluxes<-filter(actonDGoutput, sample.depth.m==0.1) %>%
-  group_by(sample.date, site) %>%
-  dplyr::summarize(meanCH4Flux = (mean(ch4DGflux, na.rm=TRUE)),
-                   meanCO2Flux = (mean(co2DGflux, na.rm=TRUE)),
-                   meanN2OFlux = (mean(n2oDGflux, na.rm=TRUE)),
-                   sdCH4Flux = (sd(ch4DGflux, na.rm=TRUE)),
-                   sdCO2Flux = (sd(co2DGflux, na.rm=TRUE)),
-                   sdN2OFlux = (sd(n2oDGflux, na.rm=TRUE)))
-ggplot(actonDGfluxes, aes(sample.date, meanN2OFlux))+
-  geom_point(aes(color=site))+
-  geom_errorbar(aes(ymax = meanN2OFlux+sdN2OFlux, 
-                    ymin = meanN2OFlux-sdN2OFlux,
-                    color=site))
-ggplot(actonDGfluxes, aes(sample.date, meanCH4Flux))+
-  geom_point(aes(color=site))+
-  geom_errorbar(aes(ymax = meanCH4Flux+sdCH4Flux, 
-                    ymin = meanCH4Flux-sdCH4Flux,
-                    color=site))+
-  ylab("CH4 DG Diffusion (mg CH4 m-2 hr-1)")+
-  ylim(0, 2)
-ggplot(actonDGfluxes, aes(sample.date, meanCO2Flux))+
-  geom_point(aes(color=site))+
-  geom_errorbar(aes(ymax = meanCO2Flux+sdCO2Flux, 
-                    ymin = meanCO2Flux-sdCO2Flux,
-                    color=site))
-rm(epOutWind, dailyWind)

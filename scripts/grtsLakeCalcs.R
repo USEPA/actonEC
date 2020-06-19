@@ -131,5 +131,5 @@ sample.dates <- select(eqAreaData, Lake_Name, deplyDt) %>%
 meanVariance.c <- merge(meanVariance.c, sample.dates)
 
 
-
+rm(myWgtList, myMeanVarianceList)
 

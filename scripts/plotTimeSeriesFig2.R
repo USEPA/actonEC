@@ -141,6 +141,10 @@ df14.gc$Label<-"b) Shallow Site"
 
 shalAFTf2<-select(df14.gc, datetime, Label, ch4_flux.f2, ch4_flux_filled.f2)
 
+#########################
+DailyANNF2<-select(DailyANNFluxes, date, ch4.trate, Label, year)
+ShalSiteF2<-select(DailyShalTfluxes, date, ch4.trate, Label, year)
+DeepSiteF2<-select(DailyDeepTfluxes, date, ch4.trate, Label, year)
 
 ########GRTS info#############
 #adding GRTS data -- need to have run GRTS code
@@ -149,14 +153,15 @@ meanVariance.c<-meanVariance.c%>%
          Label = "d) Lake Surveys",
          ch4.trate.FE = ch4.trate.mg.h_StdError/ch4.trate.mg.h_Estimate)
 
-ggplot(meanVariance.c,
-       aes(Lake_Name, ch4.erate.mg.h_Estimate))+
-  geom_point()+
-  geom_errorbar(aes(ymax = ch4.erate.mg.h_UCB95Pct,
-                    ymin = ch4.erate.mg.h_LCB95Pct))+
-  #ylim(0, 15)+
-  #xlim("Acton Lake 07", "Acton Lake 08")+
-  labs(x="", y=expression(CH[4]~Ebullition~(mg~CH[4]~m^{-2}~hr^{-1})))
+#plotting just the GRTS survey portion of Figure 2
+# ggplot(meanVariance.c,
+#        aes(Lake_Name, ch4.erate.mg.h_Estimate))+
+#   geom_point()+
+#   geom_errorbar(aes(ymax = ch4.erate.mg.h_UCB95Pct,
+#                     ymin = ch4.erate.mg.h_LCB95Pct))+
+#   #ylim(0, 15)+
+#   #xlim("Acton Lake 07", "Acton Lake 08")+
+#   labs(x="", y=expression(CH[4]~Ebullition~(mg~CH[4]~m^{-2}~hr^{-1})))
 
 grts_ts<-left_join(select(DailyANNF2, date), 
                    select(meanVariance.c, date, Label, ch4.drate.mg.m2.h_Estimate, ch4.trate.mg.h_Estimate, ch4.erate.mg.h_Estimate,
@@ -164,7 +169,7 @@ grts_ts<-left_join(select(DailyANNF2, date),
                    by="date")
 rowNum<-which(grepl("2017-07-10", grts_ts$date))
 
-#setup
+#setup for interpolation
 grts_ts<-grts_ts%>%
   mutate(ch4.d_gf = ch4.drate.mg.m2.h_Estimate,
          ch4.e_gf = ch4.erate.mg.h_Estimate,
@@ -212,10 +217,7 @@ GRTSf2<-meanVariance.c%>%
          ch4_flux_filled.f2 = ch4.trate.mg.h_StdError,
          ch4.trate = ch4.trate.mg.h_Estimate,
          year = year(date))
-#########################
-DailyANNF2<-select(DailyANNFluxes, date, ch4.trate, Label, year)
-ShalSiteF2<-select(DailyShalTfluxes, date, ch4.trate, Label, year)
-DeepSiteF2<-select(DailyDeepTfluxes, date, ch4.trate, Label, year)
+
 
 
 #format: date as POSIXct, ch4.trate as num, label as chr
@@ -235,6 +237,11 @@ F2list[[3]]<-shalAFTf2
 F2list[[4]]<-select(GRTSf2, datetime, Label, ch4_flux.f2, ch4_flux_filled.f2)
 
 flux30min_tsF2<-do.call("rbind", F2list)
+
+write.csv(flux30min_tsF2, file = paste0(projectWD, "/dataL2/Fig2data.csv"),
+          row.names = FALSE)
+write.csv(dailyFluxF2, file = paste0(projectWD, "/dataL2/Fig2dataDaily.csv"),
+          row.names = FALSE)
 
 ########################
 #Figure 2: time series of EC, shallow and deep AFT pseudo-continuous flux measurements

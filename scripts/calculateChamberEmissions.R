@@ -328,4 +328,4 @@ write.table(chamDataSub,
             sep=",",
             row.names=FALSE,
             na="NA")
-
+rm(OUT)

@@ -7,7 +7,7 @@ library(merTools)
 
 ## Read in the ANN input data, version 7.0, which includes DOY, HOD, and
 ## excludes "fuzzyRAD"
-annDat = read.csv("dataL2/annDat7.csv")
+annDat = read.csv(paste0(projectWD, "/dataL2/annDat7.csv"))
 annDat <- subset(annDat, complete.cases(annDat[,2:ncol(annDat)]))
 maxs <- apply(annDat, 2, max, na.rm=TRUE)
 mins <- apply(annDat, 2, min, na.rm=TRUE)
@@ -36,7 +36,7 @@ mins <- apply(annDat, 2, min, na.rm=TRUE)
 # ## need to select the median of the 800 flux predictions for each of the 20 errorFits, 
 # ## save medPreds and medR2
 
-fnBest<-"dataL2/BestANNs"
+fnBest<-paste0(projectWD, "/dataL2/BestANNs")
 bestANNfiles = list.files(fnBest)
 #summaryInfo<-list()
 ## Make separate lists to hold the categories of information we need
@@ -175,10 +175,10 @@ VIF.df<-do.call("cbind", VIF.df)
 #take the median of the medians
 VIF.df<-VIF.df%>%
   rowwise()%>%
-  mutate(CM = median(MedianImportance1, MedianImportance2, MedianImportance3, MedianImportance4, MedianImportance5,
+  mutate(CM = median(c(MedianImportance1, MedianImportance2, MedianImportance3, MedianImportance4, MedianImportance5,
                      MedianImportance5, MedianImportance7, MedianImportance8, MedianImportance9, MedianImportance10,
                      MedianImportance11, MedianImportance12, MedianImportance13, MedianImportance14, MedianImportance15, 
-                     MedianImportance16, MedianImportance17, MedianImportance18, MedianImportance19, MedianImportance20))
+                     MedianImportance16, MedianImportance17, MedianImportance18, MedianImportance19, MedianImportance20)))
 ## rename for figure-friendly labels
 VIF.df$names<-c("DOY", "Air T", "H", "LE", "PAR", "Sed T", "Site", "Static P", "Delta Static P", "u Star",
                 "Wind Dir", "Wind Speed", "HOD")
@@ -190,6 +190,9 @@ ggplot(VIF.df,
   xlab("Variable") + ylab("Importance (%)")+
   ggtitle("Median ANN Variable Importance")+
   theme_bw()
+
+write_csv(x=VIF.df,
+          path = paste0(projectWD, "/dataL2/Fig9data.csv"))
 
 ## aggregate and find the median of the median predictions
 count<-(1:20)

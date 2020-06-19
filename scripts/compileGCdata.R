@@ -197,12 +197,12 @@ actonTrapJoin$monthday<-as.Date(actonTrapJoin$monthday, format="%m-%d")
 actonTrapJoin$SiteDesc<-ifelse(actonTrapJoin$site == "u12", "deep", "shallow")
 
 #Time series plot of Trap Gas %CH4 at the deep and shallow site faceted between 2017 and 2018
-ggplot(actonTrapJoin, aes(monthday, ch4.ppm/10^4))+ #ppm/percent conversion 
-  geom_point(aes(color=SiteDesc), alpha=0.5)+
-  scale_x_date(date_breaks = "1 month", date_labels="%b-%d")+
-  theme(axis.text.x=element_text(angle=60, hjust=1))+
-  facet_grid(year~.)+
-  labs(x = "Date", y = "Trap Gas %CH4")
+# ggplot(actonTrapJoin, aes(monthday, ch4.ppm/10^4))+ #ppm/percent conversion 
+#   geom_point(aes(color=SiteDesc), alpha=0.5)+
+#   scale_x_date(date_breaks = "1 month", date_labels="%b-%d")+
+#   theme(axis.text.x=element_text(angle=60, hjust=1))+
+#   facet_grid(year~.)+
+#   labs(x = "Date", y = "Trap Gas %CH4")
 
 #Sample ACT18307 has a CH4 concentration of 17.4 ppm, and N2O of 2.64 ppm. 
 #Need to check log book -- may be a typo. Out of order -- more likely ACT18037. 
@@ -262,15 +262,7 @@ actonTrapAgg2$monthday<-as.Date(actonTrapAgg2$monthday, format="%m-%d")
 
 
 ## Same as time series above, but with mean and sd values
-ggplot(actonTrapAgg, aes(monthday, meanCH4/10000))+
-  geom_jitter(aes(color=SiteDesc))+
-  geom_errorbar(aes(color=SiteDesc, ymin=((meanCH4-sdCH4)/10000), ymax =((meanCH4+sdCH4)/10000)))+
-  scale_x_date(date_breaks = "1 month", date_labels="%b-%d")+
-  facet_grid(year~.)+
-  theme(axis.text.x=element_text(angle=60, hjust=1))+
-  labs(x = "Date", y = "Trap Gas %CH4")+
-  ylim(0, 100)+
-  theme_bw()
+
 
 ggplot(actonTrapAgg2, aes(monthday, meanCH4/10000))+
   geom_jitter(aes(color=SiteDesc))+

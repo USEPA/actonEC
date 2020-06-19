@@ -561,37 +561,5 @@ eqAreaDataSub$siteDistFromShore<-rep(c(67,  #U01
                                        242, #U17
                                        170),#U18
                                      6)
-### A bunch of exploratory plots:
-# ggplot(eqAreaDataSub, aes(siteID, ebMlHrM2))+
-#   geom_point()
-# 
-# #  facet_grid(Lake_Name~.)
-# 
-# ggplot(eqAreaDataSub, aes(Tmp_C_S, ebMlHrM2))+
-#   geom_point(aes(color=Lake_Name))
-# 
-# # eqAreaDataSub$fsiteID <- orderSite(eqAreaDataSub, 
-# #                                    choice1 = "ch4.d")
-# ggplot(eqAreaDataSub, aes(ch4.drate.mg.h.best, siteID))+
-#   geom_point(aes(color=Lake_Name))+
-#   xlim(0, 10)+
-#   ggtitle("CH4 Diffusive Emissions (mg CH4 m-2 hr-1)")
-# # eqAreaDataSub$fsiteID <- orderSite(eqAreaDataSub, 
-# #                                    choice1 = "co2.d")
-# ggplot(eqAreaDataSub, aes(co2.drate.mg.h.best, siteID))+
-#   geom_point(aes(color=Lake_Name))+
-#   # ylim(0, 26)+
-#   ggtitle("CO2 Diffusive Emissions (mg CO2 m-2 hr-1)")
-# 
-# 
-# # eqAreaDataSub$fsiteID <- orderSite(eqAreaDataSub, 
-# #                                    choice1 = "ch4.e")
-# 
-# ggplot(eqAreaDataSub, aes(ch4.erate.mg.h, siteID))+
-#   geom_point(aes(color=Lake_Name))+
-#   ggtitle("CH4 Ebullitive Emissions (mg CH4 m-2 hr-1)")
-# 
-# ggplot(eqAreaDataSub, aes(siteID, co2.erate.mg.h))+
-#   geom_point(aes(color=Lake_Name))+
-#   ggtitle("CO2 Ebullitive Emissions (mg CO2 m-2 hr-1)")
-# 
+
+rm(OUT)

@@ -91,3 +91,65 @@ ggsave(filename="figures/SI_ch4vsP.tiff",
 lm_press<-lm(ch4_flux~air_pressure_kPa, data=yesDlow)  
 summary(lm_press)
 
+
+######### other analyses -----
+
+### Comparison of Acton observed monthly bowen ratio to that in Liu et al (Missouri reservoir):
+
+MonthlyFluxDat$liu<-c(0.44, 0.28, 0.21, 0.19, 0.11, 0.11, 0.09, 0.17, 0.14, 0.26, 0.32, 0.38,
+                      0.44, 0.28, 0.21, 0.19, 0.11, 0.11, 0.09, 0.17, 0.14, 0.26, 0.32)
+
+MonthlyFluxDat$abs.bowR<-ifelse(MonthlyFluxDat$bowR<0,
+                                abs(MonthlyFluxDat$bowR),
+                                MonthlyFluxDat$bowR)
+
+
+ggplot(MonthlyFluxDat, aes(Rdate, meanLE))+
+  geom_line()+
+  geom_point()+
+  geom_line(aes(Rdate, meanH, color="red"))+
+  geom_point(aes(Rdate, meanH, color="red"))
+
+ggplot(MonthlyFluxDat, aes(monthday, abs.bowR))+
+  geom_point(alpha=0.7, aes(color=as.factor(year)))+
+  geom_point(aes(monthday, liu))
+
+
+
+## plot of sed T and air T from May thru Oct:
+
+currentYear<-year(Sys.time())
+
+ggplot(filter(DailyFluxDat, monthday>paste0(currentYear,"-05-01"), monthday<paste0(currentYear, "-11-01")),
+       aes(monthday, meanAirT))+
+  annotate("rect", xmin=as.Date(paste0(currentYear, "-05-24")),
+           xmax=as.Date(paste0(currentYear,"-06-04")),
+           ymin=-Inf, ymax=Inf, alpha=0.5)+
+  geom_line(color="red", size=1, linetype=2)+
+  geom_line(data=filter(DailyFluxDat, monthday>paste0(currentYear,"-05-01"), monthday<paste0(currentYear, "-11-01")), 
+            aes(monthday, meanSedT), alpha=0.8, size=1)+
+  # scale_x_date(labels=date_format("%b %Y", tz="UTC"), 
+  #              breaks=date_breaks("2 month"),
+  #              limits = c(as.Date("2017-01-01"), as.Date("2018-11-20")))+
+  ylab(expression(T~(deg~C)))+
+  xlab("")+
+  facet_grid(year~.)+
+  #geom_hline(yintercept=0, linetype = 2, alpha=0.2)+
+  theme(axis.text.x=element_text(angle=45, hjust=1))+
+  theme_bw()
+
+######## Daily PAR #######
+ggplot(DailyFluxDat, aes(date, meanPAR))+
+  annotate("rect", xmin=as.Date("2017-05-24"),
+           xmax=as.Date("2017-06-04"),
+           ymin=-Inf, ymax=Inf, alpha=0.5)+
+  annotate("rect", xmin=as.Date("2018-05-24"),
+           xmax=as.Date("2018-06-04"),
+           ymin=-Inf, ymax=Inf, alpha=0.5)+
+  geom_line(alpha=0.5)+
+  theme_bw()+
+  scale_x_date(labels=date_format("%b %Y", tz="UTC"), 
+               breaks=date_breaks("2 month"),
+               limits = c(as.Date("2017-01-01"), as.Date("2018-11-20")))+
+  ylab(expression(PAR~(mol~m^-2~d^-1)))+
+  xlab("")

@@ -174,7 +174,7 @@ hoboU12$hgSmth<-c(rep(NA, 5), zwat, rep(NA, 6))
 zwat<-zoo::rollapply(hoboU14$height, width = 12,FUN = mean)
 hoboU14$hgSmth<-c(rep(NA, 5), zwat, rep(NA, 6))
 
-
+rm(zwat)
 ## 0.5: Determining terms for error calculation:  
 #delta_hg = sqrt(delta_m^2[V_out^2+mean(V_zero^2)]+mean(m)^2[delta_V_out^2+delta_V_zero^2])
 
@@ -464,7 +464,7 @@ dailyEb<-do.call("rbind", dailyEb)
 
 
 
-#GRTS results for volumetric ebullition at u12 (deep) and u14 (shallow):
+#GRTS results for volumetric ebullition at u12 (deep) and u14 (shallow) for reference:
 g.volEb<-c(15.4, 38.9, 33.7, 7.4, 7.4, 0.85)
 g.date<-as.Date(c("2017-07-10", "2017-08-31", "2017-10-04", "2017-07-10", "2017-08-31", "2017-10-04"))
 g.datetime<-as.POSIXct(c("2017-07-10 12:00", "2017-08-31 12:00", "2017-10-04 12:00", "2017-07-10 12:00", "2017-08-31 12:00", "2017-10-04 12:00"), tz="UTC")
@@ -692,10 +692,10 @@ DailyShalFluxes$Rdate <- as.Date(DailyShalFluxes$date)
 
 ggplot(filter(DailyShalFluxes, monthday>"2020-05-01"), aes(monthday, meanCH4Flux))+
   geom_line()+
-  geom_line(aes(monthday, meanCH4Flux+dailyCH4VolErr, alpha=0.3))+
-  geom_line(aes(monthday, meanCH4Flux-dailyCH4VolErr, alpha=0.3))+
-  geom_line(aes(monthday, meanCH4Flux+dailyCH4TErr, alpha=0.3), color="#FF6699")+
-  geom_line(aes(monthday, meanCH4Flux-dailyCH4TErr, alpha=0.3), color="#FF6699")+
+  geom_line(aes(monthday, meanCH4Flux+dailyCH4VolErr), alpha=0.3)+
+  geom_line(aes(monthday, meanCH4Flux-dailyCH4VolErr), alpha=0.3)+
+  geom_line(aes(monthday, meanCH4Flux+dailyCH4TErr), alpha=0.3, color="#FF6699")+
+  geom_line(aes(monthday, meanCH4Flux-dailyCH4TErr), alpha=0.3, color="#FF6699")+
   facet_grid(year~.)+
   #ylim(-40, 70)+
   ylab("Shallow Site Daily Fluxes (mg Ch4 m-2 h-1)")+
@@ -715,14 +715,18 @@ DailyDeepFluxes$monthday<-as.Date(DailyDeepFluxes$monthday, format="%m-%d %H:%M"
 
 ggplot(filter(DailyDeepFluxes, monthday>"2020-05-01"), aes(monthday, meanCH4Flux))+
   geom_line()+
-  geom_line(aes(monthday, meanCH4Flux+dailyCH4VolErr, alpha=0.3))+
-  geom_line(aes(monthday, meanCH4Flux-dailyCH4VolErr, alpha=0.3))+
-  geom_line(aes(monthday, meanCH4Flux+dailyCH4TErr, alpha=0.3), color="#FF6699")+
-  geom_line(aes(monthday, meanCH4Flux-dailyCH4TErr, alpha=0.3), color="#FF6699")+
+  geom_line(aes(monthday, meanCH4Flux+dailyCH4VolErr), alpha=0.3)+
+  geom_line(aes(monthday, meanCH4Flux-dailyCH4VolErr), alpha=0.3)+
+  geom_line(aes(monthday, meanCH4Flux+dailyCH4TErr), alpha=0.3, color="#FF6699")+
+  geom_line(aes(monthday, meanCH4Flux-dailyCH4TErr), alpha=0.3, color="#FF6699")+
   facet_grid(year~.)+
   ylim(-20, 40)+
   ylab("Deep Site Daily Fluxes (mg Ch4 m-2 h-1)")+
   theme_bw()
+
+
+rm(vMinTest12, vMinTest14, vZeroBar12, vZeroBar14, deltaVzero12, deltaVzero14, vMinRollSd12, vMinRollSd14)
+rm(testP1, testP2)
 
 ############## Comparison with Jake's calcs
 

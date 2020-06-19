@@ -57,6 +57,8 @@ mylist4 <- lapply(mylist3, function(x) {
 # 5.  Coerce list into dataframe via rbind
 eqAreaData <- do.call("rbind", mylist4)  # Coerces list into dataframe.
 
+rm(mylist, mylist1, mylist2, mylist3, mylist4)
+
 #the chamber msmts were taken on the retreival day during the 
 #2018 July and Sept GRTS surveys. Program this in:
 eqAreaData$chamDay<-ifelse(eqAreaData$Lake_Name=="Acton Lake 2018 July" | 
