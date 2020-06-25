@@ -212,7 +212,7 @@ grts_ts<-grts_ts%>%
 
 GRTSf2<-meanVariance.c%>%
   mutate(datetime = date,
-         Label = "d) Lake-Wide Surveys",
+         Label = "d) GRTS Surveys",
          ch4_flux.f2 = ch4.trate.mg.h_Estimate,
          ch4_flux_filled.f2 = ch4.trate.mg.h_StdError,
          ch4.trate = ch4.trate.mg.h_Estimate,
@@ -252,14 +252,15 @@ Figure2<-ggplot(flux30min_tsF2, aes(datetime, ch4_flux_filled.f2))+
    annotate("rect", xmin=as.POSIXct(as.Date("2018-05-24")),
             xmax=as.POSIXct(as.Date("2018-06-04")),
             ymin=-Inf, ymax=Inf, alpha=0.5)+
-  geom_point(alpha=0.1, size=1, color="gray")+ #gray for the gapfilled data
+  #geom_point(alpha=0.1, size=1, color="gray")+ #gray for the gapfilled data
   geom_point(data=flux30min_tsF2, aes(datetime, ch4_flux.f2), size=1, alpha=0.2)+ #black points for the 30-min EC data
   geom_line(data=dailyFluxF2, aes(date, ch4.trate), color="red", size=1)+
-  geom_errorbar(data = filter(flux30min_tsF2, Label == "d) Lake-Wide Surveys"),
+  geom_errorbar(data = filter(flux30min_tsF2, Label == "d) GRTS Surveys"),
                 aes(ymax = ch4_flux.f2+ch4_flux_filled.f2*1.96,
                     ymin = ch4_flux.f2-ch4_flux_filled.f2*1.96))+
   facet_grid(Label~.)+
-  ylab(expression(CH[4]~Flux~(mg~m^-2~hr^-1)))+
+  #ylab(expression(CH[4]~Flux~(mg~m^-2~hr^-1)))+
+  ylab(expression(F[CH4]~(mg~CH[4]~m^-2~hr^-1)))+
   xlab("")+
   scale_x_datetime(date_breaks="3 months", date_minor_breaks = "1 month", 
                    labels=date_format("%b %Y"))+

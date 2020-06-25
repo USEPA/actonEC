@@ -157,6 +157,8 @@ grts_ts<-grts_ts%>%
 
 
 #####Test plots, cuml calcs#
+
+### Figure S
 ggplot(grts_ts, aes(date, ch4.trate.mg.h_Estimate))+
   geom_point()+
   geom_point(aes(date, ch4.erate.mg.h_Estimate), color="red")+
@@ -177,59 +179,59 @@ ggplot(grts_ts, aes(date, ch4.t_cumuPt))+
                 aes(ymin=(ch4.t_cumuPt-ch4.t_cumuErr),
                     ymax=(ch4.t_cumuPt+ch4.t_cumuErr)))
 
-GRTSF8<-grts_ts%>%
+GRTSF9<-grts_ts%>%
   mutate(ch4.t_gf = replace(ch4.t_gf, date<"2017-05-01", NA),
          ch4.t_gf = replace(ch4.t_gf, date>"2017-10-04" & date<"2018-05-01", NA),
          ch4.t_gf = replace(ch4.t_gf, date>"2018-10-01", NA),
          ch4.trate = ch4.t_gf,
          ch4.tPt = ch4.t_cumuPt,
          ch4.FE = ch4.trate.FE,
-         Label = "d) Lake-Wide Surveys",
+         Label = "d) GRTS Surveys",
          year = year(date),
          monthday = format(date, format="%m-%d %H:%M"))# %>%
-GRTSF8$monthday<-as.Date(GRTSF8$monthday, format="%m-%d %H:%M")
+GRTSF9$monthday<-as.Date(GRTSF9$monthday, format="%m-%d %H:%M")
 
-rowNum<-which(grepl("2018-01-01", GRTSF8$date))
-value17<-GRTSF8$ch4.t_cumu[rowNum]
+rowNum<-which(grepl("2018-01-01", GRTSF9$date))
+value17<-GRTSF9$ch4.t_cumu[rowNum]
 
-for(i in 1:nrow(GRTSF8)){
-  GRTSF8$ch4.t_cumu_yr[i]<-ifelse(GRTSF8$year[i]<2018,
-                                  GRTSF8$ch4.t_cumu[i],
-                                  GRTSF8$ch4.t_cumu[i] - value17)
-  GRTSF8$ch4.tPt_yr[i]<-ifelse(GRTSF8$year[i]<2018,
-                               GRTSF8$ch4.tPt[i],
-                               GRTSF8$ch4.tPt[i] - value17)
-  GRTSF8$ch4.tPt_err[i]<-GRTSF8$ch4.tPt_yr[i]*GRTSF8$ch4.FE[i]
+for(i in 1:nrow(GRTSF9)){
+  GRTSF9$ch4.t_cumu_yr[i]<-ifelse(GRTSF9$year[i]<2018,
+                                  GRTSF9$ch4.t_cumu[i],
+                                  GRTSF9$ch4.t_cumu[i] - value17)
+  GRTSF9$ch4.tPt_yr[i]<-ifelse(GRTSF9$year[i]<2018,
+                               GRTSF9$ch4.tPt[i],
+                               GRTSF9$ch4.tPt[i] - value17)
+  GRTSF9$ch4.tPt_err[i]<-GRTSF9$ch4.tPt_yr[i]*GRTSF9$ch4.FE[i]
   
 }
 
-GRTSF8<-GRTSF8%>%
+GRTSF9<-GRTSF9%>%
   mutate(ch4.t_cumu_yr = replace(ch4.t_cumu_yr, monthday<"2020-05-01", NA),
          ch4.t_cumu_yr = replace(ch4.t_cumu_yr, monthday>"2020-10-04", NA),
          ch4.t_cumu_yr_L95 = ch4.tPt_yr-ch4.tPt_err,
          ch4.t_cumu_yr_U95 = ch4.tPt_yr+ch4.tPt_err
   )
 
-DailyANNF8<-select(DailyANNFluxes, date, Label, year, ch4.t_cumu, monthday, ch4.t_cumu_yr, ch4.t_cumu_yr_U95, ch4.t_cumu_yr_L95)
-ShalSiteF8<-select(DailyShalTfluxes, date, Label, year, ch4.t_cumu, monthday, ch4.t_cumu_yr, ch4.t_cumu_yr_U95, ch4.t_cumu_yr_L95)
-DeepSiteF8<-select(DailyDeepTfluxes, date, Label, year, ch4.t_cumu, monthday, ch4.t_cumu_yr, ch4.t_cumu_yr_U95, ch4.t_cumu_yr_L95)
-GRTSF8<-select(GRTSF8, date, Label, year, ch4.t_cumu, monthday, ch4.t_cumu_yr, ch4.t_cumu_yr_U95, ch4.t_cumu_yr_L95)
+DailyANNF9<-select(DailyANNFluxes, date, Label, year, ch4.t_cumu, monthday, ch4.t_cumu_yr, ch4.t_cumu_yr_U95, ch4.t_cumu_yr_L95)
+ShalSiteF9<-select(DailyShalTfluxes, date, Label, year, ch4.t_cumu, monthday, ch4.t_cumu_yr, ch4.t_cumu_yr_U95, ch4.t_cumu_yr_L95)
+DeepSiteF9<-select(DailyDeepTfluxes, date, Label, year, ch4.t_cumu, monthday, ch4.t_cumu_yr, ch4.t_cumu_yr_U95, ch4.t_cumu_yr_L95)
+GRTSF9<-select(GRTSF9, date, Label, year, ch4.t_cumu, monthday, ch4.t_cumu_yr, ch4.t_cumu_yr_U95, ch4.t_cumu_yr_L95)
 
-cumulativeFluxF8<-list()
-cumulativeFluxF8[[1]]<-DailyANNF8
-cumulativeFluxF8[[2]]<-ShalSiteF8
-cumulativeFluxF8[[3]]<-DeepSiteF8
-cumulativeFluxF8[[4]]<-GRTSF8
+cumulativeFluxF9<-list()
+cumulativeFluxF9[[1]]<-DailyANNF9
+cumulativeFluxF9[[2]]<-ShalSiteF9
+cumulativeFluxF9[[3]]<-DeepSiteF9
+cumulativeFluxF9[[4]]<-GRTSF9
 
-cmlDailyFluxF8<-do.call("rbind", cumulativeFluxF8)
+cmlDailyFluxF9<-do.call("rbind", cumulativeFluxF9)
 
-write.csv(cmlDailyFluxF8, paste0(projectWD, "/dataL2/Fig8data.csv"),
+write.csv(cmlDailyFluxF9, paste0(projectWD, "/dataL2/Fig9data.csv"),
           row.names =FALSE)
 
-#Figure 8:
-ggplot(filter(cmlDailyFluxF8, year>2016), aes(monthday, ch4.t_cumu_yr))+
+#Figure 9:
+ggplot(filter(cmlDailyFluxF9, year>2016), aes(monthday, ch4.t_cumu_yr))+
   geom_line(aes(color=Label, linetype=Label), size=1)+
-  geom_ribbon(data=filter(cmlDailyFluxF8, year>2016), 
+  geom_ribbon(data=filter(cmlDailyFluxF9, year>2016), 
               aes(x = monthday, 
                   ymin = ch4.t_cumu_yr_L95,
                   ymax = ch4.t_cumu_yr_U95,
@@ -241,7 +243,7 @@ ggplot(filter(cmlDailyFluxF8, year>2016), aes(monthday, ch4.t_cumu_yr))+
   theme(legend.position = "top",
         legend.title=element_blank())+
   #theme_bw()+
-  ylab(expression(Cumulative~CH[4]~Areal~Emissions~(g~m^-2)))+
+  ylab(expression(Cumulative~CH[4]~Areal~Emissions~(g~CH[4]~m^-2)))+
   xlab("")+
   labs(fill = "Method")+
   theme_bw()+

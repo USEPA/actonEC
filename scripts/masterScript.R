@@ -63,16 +63,15 @@ source("scripts/qcECfluxes.R")
 ##### DATA VISUALIZATION SCRIPTS #####
 file.edit("scripts/calcsForTable2.R")
 file.edit("scripts/plotTimeSeriesFig2.R") #sets up and plots Figure 2: time series of FCH4 measured by EC, AFTs, and surveys
-file.edit("scripts/metPlotsFig3.R") # sets up and plots Figure 3 a-c, e
-file.edit('scripts/miamiInflowFig3d.R') #Loads vanni stream gauge data plots Figure 3 d
+file.edit("scripts/metPlotsFig3.R") # sets up and plots Figure 3 a-e
+#file.edit('scripts/miamiInflowFig3d.R') #Loads vanni stream gauge data plots Figure 3 d
 file.edit('scripts/miamiHydroFig3.R') #Figure 3 f, g
-file.edit('scriptsAndRmd/fluxTmprPlots.R') ## Multi-panel plots showing Q10 and 2DKS, Fig 4
-
+file.edit('scripts/fluxTmprPlotsFig4.R') ## Multi-panel plots showing Q10 and 2DKS, Fig 4
 file.edit("scripts/figure5_lollipopPlots.Rmd")  ## makes plots for figure 5
 file.edit("scripts/ebPlotsFigs6_7.R")
 file.edit("scripts/plotCumulativeTSFig8.R")
 file.edit('scripts/ANNscripts/evaluateANNs.R') #make Figure 9 (VIF)
-
+file.edit("scripts/plotFig10.R") 
 file.edit("scripts/miamiChlFig11b.R") #load chl data and make Fig 11b
 
 file.edit('scriptsAndRmd/diurnalAnalysis.R') #makes diurnal pdfs, Figure 12

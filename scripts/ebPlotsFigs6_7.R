@@ -12,12 +12,12 @@
 ### Some of the depths are missing. We'll gap-fill them using the mean of the site water depths 
 ### measured at the other site visits
 
-fig7<-select(eqAreaDataSub, siteID, wtrDpth, ch4.erate.mg.h)%>%
+fig6<-select(eqAreaDataSub, siteID, wtrDpth, ch4.erate.mg.h)%>%
   mutate(wtrDpthFilled = wtrDpth)
 
 
 #nice code from: https://stackoverflow.com/questions/56121600/fill-gaps-using-a-group-mean-in-r
-fig7<-fig7%>%
+fig6<-fig6%>%
 dplyr::group_by(siteID) %>%
   mutate(
     fill = mean(wtrDpth, na.rm=TRUE),
@@ -25,29 +25,29 @@ dplyr::group_by(siteID) %>%
                               TRUE ~ fill)
   )
 
-ggplot(fig7, aes(wtrDpthFilled, ch4.erate.mg.h))+
+ggplot(fig6, aes(wtrDpthFilled, ch4.erate.mg.h))+
   geom_point(alpha=0.3)+
   geom_smooth(method="lm")+
   labs(x="Water Depth (m)", 
-       y =expression(CH[4]~Ebullition~(mg~m^-2~hr^-1)))+
+       y =expression(CH[4]~Ebullition~(mg~CH[4]~m^-2~hr^-1)))+
   theme_bw()
 
-ebDepth<-lm(ch4.erate.mg.h~wtrDpthFilled, data=fig7)
+ebDepth<-lm(ch4.erate.mg.h~wtrDpthFilled, data=fig6)
 summary(ebDepth)
 
 # non-gap filled:
-ebDepth<-lm(ch4.erate.mg.h~wtrDpth, data=eqAreaDataSub)
-summary(ebDepth)
+# ebDepth<-lm(ch4.erate.mg.h~wtrDpth, data=eqAreaDataSub)
+# summary(ebDepth)
+# 
+# ggplot(eqAreaDataSub, aes(wtrDpth, ch4.erate.mg.h))+
+#   geom_point(alpha=0.3)+
+#   geom_smooth(method="lm")+
+#   labs(x="Water Depth (m)", 
+#        y =expression(CH[4]~Ebullition~(mg~m^-2~hr^-1)))+
+#   theme_bw()
 
-ggplot(eqAreaDataSub, aes(wtrDpth, ch4.erate.mg.h))+
-  geom_point(alpha=0.3)+
-  geom_smooth(method="lm")+
-  labs(x="Water Depth (m)", 
-       y =expression(CH[4]~Ebullition~(mg~m^-2~hr^-1)))+
-  theme_bw()
 
-
-write_csv(x = select(fig7, siteID, wtrDpth, wtrDpthFilled, ch4.erate.mg.h),
+write_csv(x = select(fig6, siteID, wtrDpth, wtrDpthFilled, ch4.erate.mg.h),
           path = paste0(projectWD, "/dataL2/Fig6data.csv"))
 
 

@@ -1,7 +1,7 @@
 ---
-title: "Water Quality and Methane Emissions at Acton Lake"
-author: "J. Beaulieu and S. Waldo"
-date: "January 26, 2017"
+title: "Lollipop Plots of Methane Emissions from GRTS Surveys at Acton Lake"
+author: "S. Waldo and J. Beaulieu"
+date: "January 26, 2017, updated June 2020"
 output:
   word_document: default
   pdf_document:
@@ -22,30 +22,8 @@ output:
     + Chlorophyll a
 5. Tables summarizing the other measured water quality values at each site within Acton Lake    
 
-
-
-
-```{r setup, results='hide', message=FALSE, warning=FALSE, echo=FALSE}
-#myWd <- "C:/Users/JBEAULIE/GitRepository/mulitResSurvey" # for Jake
-#myWd <- "C:/R_Projects/actonFluxProject" # for Sarah
-
-globalWd <- "/Users/swaldo/Documents/epaComputer/C_R_Projects/actonEC/data/grtsEqArea/" #location of GIS files
-globalWd<- "/Users/swaldo/Documents/epaComputer/C_R_Projects/actonFluxProject/dataInput/"
-  #" ⁨Use▸ ⁨swaldo⁩ ▸ ⁨Documents⁩ ▸ ⁨epaComputer⁩ ▸ ⁨C_R_Projects⁩ ▸ ⁨actonFluxProject⁩ ▸ ⁨dataInput⁩"
-```
-
-
 ```{r results='hide', message=FALSE, warning=FALSE, echo=FALSE}
-#Get the data and libraries
-
-# knit() creates a new session and therefore can't read objects directly from
-# workspace.  Run this file outside of project session and load project
-# workspace.
-
-#not sure about this:
-#is this where the "eqAreaData" comes from?
-#got it: run through the GRTS routine, then exit, selecting the option to "Save Workspace", then you can load this info by loading .RData
-#load(paste(myWd, "/.RData", sep = ""))
+#Load libraries
 
 library(ggplot2)
 library(ggmap)
@@ -63,14 +41,14 @@ We sampled Acton Lake on July 10^th^ - 11^th^, August 31^st^ - September 1^st^, 
   
 
 ```{r results='hide', message=FALSE, warning=FALSE, echo=FALSE, fig.cap='*Location of the fifteen sample sites within Acton Lake. Satellite image from Google Maps.*'}
-
+myWD<-getwd()
 
 # Read and project spatial points dataframe for plotting
-# actonSitesPlot201707 <- rgdal::readOGR(dsn = globalWd, 
-#                           layer = "acton201707SitesEqAreaDataEC")  # shapefile with data for July
+ actonSitesPlot201707 <- rgdal::readOGR(dsn = lollipopWD, 
+                           layer = "acton201707SitesEqAreaDataEC")  # shapefile with data for July
 actonSitesPlot201707 <- read.dbf(paste0(globalWd, "acton201707SitesEqAreaDataEC.dbf"))
 actonSitesPlot201707_84 <- spTransform(x = actonSitesPlot201707, #reproject
-                            CRS("+proj=longlat +datum=WGS84")) # projection for google maps
+                            CRS("+proj=longlat +datum=WGS84") # projection for google maps
 
 actonSitesPlot201707_84@data <- mutate(actonSitesPlot201707_84@data, 
                             long=coordinates(actonSitesPlot201707_84)[,1], # add long to @data slot

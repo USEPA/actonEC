@@ -1,6 +1,6 @@
 
 
-source("scriptsAndRmd/masterLibraryActon.R")
+#source("scriptsAndRmd/masterLibraryActon.R")
 #library(OceanView)
 library(rLakeAnalyzer)
 library(chron)
@@ -181,13 +181,6 @@ U12SondePro.rLake<-select(U12SondePro.s, -Site, -Lake)
 
 par(fg=NA, col="black", axisTicks(usr=c(5, 35), log=FALSE, nint = 14)) #border="black",#this gets rid of the lines on the legend
 
-#par(fg=U12SondePro.rLake, col="black", axisTicks(usr=c(5, 35), log=FALSE, nint = 14)) #this gets rid of the lines on the legend
-#https://stackoverflow.com/questions/8068366/removing-lines-within-filled-contour-legend
-rLakeAnalyzer::wtr.heat.map(U12SondePro.rLake,
-                            zlim=c(5, 35),
-                            key.title = title(main = "Celsius", cex.main = 1, line=1),
-                            plot.title = title(ylab = "Depth (m)",
-                                               main="Deep Site T Profile"))
 
 #missing sonde measurements for 1, 3, and 5 m depths in fall of 2017: 
 # 10/31, 11/14, 11/28 & 12/11
@@ -203,11 +196,6 @@ for (i in 1:nrow(U12SondePro.rLake)) {
                                       sum(U12SondePro.rLake$wtrT_4[i], U12SondePro.rLake$wtrT_6[i])/2,
                                       U12SondePro.rLake$wtrT_5[i])}
 
-rLakeAnalyzer::wtr.heat.map(U12SondePro.rLake,
-                            zlim=c(0, 35),
-                            key.title = title(main = "Celsius", cex.main = 1, line=1),
-                            plot.title = title(ylab = "Depth (m)",
-                                               main="Deep Site T Profile"))
 ### adding in blank filler on x-axis to match wtr.heat.map with other Fig 2 panels,
 ### for the winter when the sondes were out of the water
 timeframeDaily<-seq.POSIXt(from = as.POSIXct("2016-12-01 00:00:00",
@@ -271,7 +259,7 @@ plotTicks<-seq(from=as.Date(rLakeBuoySonde$datetime[32]),
 par(fg="black", col="black", axisTicks(usr=c(5, 35), log=FALSE, nint = 14)) #this gets rid of the lines on the legend
 
 
-######## Current best version of Figure 3 g ########
+######## Figure 3 g ########
 rLakeAnalyzer::wtr.heat.map(rLakeBuoySonde2,
              zlim=c(2, 32),
              key.title = title(main = "Celsius", cex.main = 1, line=1),

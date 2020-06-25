@@ -180,8 +180,8 @@ dailyECfluxSedT<-dailyECfluxSedT%>%
   )
 
 dailyECfluxSedT<-as.data.frame(dailyECfluxSedT)
-dailyMassFlux12$site<-"(c) Deep AFT"
-dailyMassFlux14$site<-"(b) Shallow AFT"
+dailyMassFlux12$site<-"(c) Deep Site"
+dailyMassFlux14$site<-"(b) Shallow Site"
 dailyMassFlux14$siteT<-NA
 
 dailyMassEbList<-list()
@@ -194,13 +194,13 @@ dailyMassEb<-do.call("rbind", dailyMassEbList)
 dailyMassEb$log10eb<-log((dailyMassEb$dailyEbCh4mgM2h*24), base=10) #convert to mg m-2 d-1
 
 lmDeepQ10_2017<-lm(log10eb ~ sedT, 
-                   data=filter(dailyMassEb, site=="(c) Deep AFT", year=="2017"))
+                   data=filter(dailyMassEb, site=="(c) Deep Site", year=="2017"))
 lmDeepQ10_2018<-lm(log10eb ~ sedT, 
-                   data=filter(dailyMassEb, site=="(c) Deep AFT", year=="2018"))
+                   data=filter(dailyMassEb, site=="(c) Deep Site", year=="2018"))
 lmShalQ10_2017<-lm(log10eb ~ sedT, 
-                   data=filter(dailyMassEb, site=="(b) Shallow AFT", year == "2017"))
+                   data=filter(dailyMassEb, site=="(b) Shallow Site", year == "2017"))
 lmShalQ10_2018<-lm(log10eb ~ sedT, 
-                   data=filter(dailyMassEb, site=="(b) Shallow AFT", year == "2018"))
+                   data=filter(dailyMassEb, site=="(b) Shallow Site", year == "2018"))
 lmEC.Q10_2017<-lm(log10eb ~ sedT, 
                   data=filter(dailyMassEb, site=="(a) Eddy Covariance", year == "2017"))
 lmEC.Q10_2018<-lm(log10eb ~ sedT, 
@@ -224,7 +224,7 @@ ggplot(filter(dailyMassEb, year>2016, year<2019), aes(sedT, log10eb))+
 ggsave("flux_Q10s.tiff", path=paste0(projectWD, "/figures"),
        width=6, height=5)
 
-dailyMassEb$year<-as.factor(dailyMassEb$year)
+
 
 ############# ecoQ10 coefficient calculations: ###########################################
 
@@ -327,10 +327,10 @@ ggplot(peaShal18, aes(sedT, dailyEbCh4mgM2h))+
 
 peaDeep17<-filter(dailyMassFlux12, !is.na(dailyEbCh4mgM2h), !is.na(sedT), date<"2018-01-01")%>%
   select(sedT, dailyEbCh4mgM2h)
-write.table(peaDeep17, 
-            file="C:/R_Projects/actonFluxProject/Threshold test/deep17.prn",
-            sep=" ",
-            row.names=FALSE)
+# write.table(peaDeep17, 
+#             file="C:/R_Projects/actonFluxProject/Threshold test/deep17.prn",
+#             sep=" ",
+#             row.names=FALSE)
 #output from big2dks: 
 #D = 0.204766
 #p = 0.000200
@@ -343,10 +343,10 @@ ggplot(peaDeep17, aes(sedT, dailyEbCh4mgM2h))+
 
 peaDeep18<-filter(dailyMassFlux12, !is.na(dailyEbCh4mgM2h), !is.na(sedT), date>"2018-01-01")%>%
   select(sedT, dailyEbCh4mgM2h)
-write.table(peaDeep18, 
-            file="C:/R_Projects/actonFluxProject/Threshold test/deep18.prn",
-            sep=" ",
-            row.names=FALSE)
+# write.table(peaDeep18, 
+#             file="C:/R_Projects/actonFluxProject/Threshold test/deep18.prn",
+#             sep=" ",
+#             row.names=FALSE)
 #output from big2dks: 
 #D =   0.138327
 #p =  0.000200
@@ -361,8 +361,8 @@ xlim(11, 20)
 xthresholds<-c(xEC17, xEC18, xShal17, xShal18, xDeep17, xDeep18)
 ythresholds<-c(yEC17, yEC18, yShal17, yShal18, yDeep17, yDeep18)
 
-twoDKS<-data.frame(site=c(rep("(a) Eddy Covariance", 2), rep("(b) Shallow AFT", 2),
-                          rep("(c) Deep AFT", 2)),
+twoDKS<-data.frame(site=c(rep("(a) Eddy Covariance", 2), rep("(b) Shallow Site", 2),
+                          rep("(c) Deep Site", 2)),
                    year=c("2017", "2018","2017", "2018","2017", "2018"),
                    hintercept=xthresholds,
                    yintercept=ythresholds)
@@ -376,7 +376,7 @@ ggplot(filter(dailyMassEb, year>2016, year<2019), aes(sedT, dailyEbCh4mgM2h))+
   facet_grid(as.factor(site)~year)+#, scales = "free")+
   #stat_smooth(method="lm")+
   #xlim(10, 30)+
-  labs(x="Sediment Temperature (deg C)", y=expression(CH[4]~Flux~(mg~m^-2~hr^-1)))+
+  labs(x="Sediment Temperature (deg C)", y=expression(F[CH4]~(mg~CH[4]~m^-2~hr^-1)))+
   #scale_color_manual(values=wes_palette(name="Darjeeling1", 2))+
   # labs(title=paste("Deep 2017 R2 = ",signif(summary(lmDeepQ10_2017)$adj.r.squared, 2),
   #                  "Deep 2017 Slope =",signif(lmDeepQ10_2017$coef[[2]],2 ),

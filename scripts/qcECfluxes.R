@@ -24,6 +24,56 @@ epOutSub<-select(epOutOrder, RDateTime, date,	time, DOY, daytime, Tau,qc_Tau,H,	
 
 epOutSub$qc_ch4_factor<-as.factor(epOutSub$qc_ch4_flux)
 
+#### Mini ustar threshold investigation:
+# 
+# summary(epOutOrder$ch4_scf)
+# summary(epOutOrder$ch4_flux)
+# 
+# 
+# ##Filter fluxes for QAQC parameters and replace with NAs using mutate: 
+# epOutSubFiltU<-epOutSub %>% 
+#   #epOutFilt.test<-ep.test2%>%
+#   mutate(
+#     #QC level 2
+#     ch4_flux=replace(ch4_flux, qc_ch4_flux==2, NA),
+#     co2_flux=replace(co2_flux, qc_co2_flux==2, NA),
+#     LE=replace(LE, qc_LE==2, NA),
+#     H=replace(H, qc_H==2, NA),
+#     #winds from the shore before tower relocation
+#     ch4_flux=replace(ch4_flux, RDateTime < "2018-04-30 00:00:00" & 
+#                        wind_dir>195 & wind_dir<330, NA),
+#     co2_flux=replace(co2_flux, RDateTime < "2018-04-30 00:00:00" &
+#                        wind_dir>195 & wind_dir<330, NA),
+#     H=replace(H, RDateTime < "2018-04-30 00:00:00" &
+#                 wind_dir>195 & wind_dir<330, NA),
+#     LE=replace(LE, RDateTime < "2018-04-30 00:00:00" &
+#                  wind_dir>195 & wind_dir<330, NA),
+#     #ustar filter for CO2 and CH4 after tower relocation
+#     #ch4_flux=replace(ch4_flux, ustar<0.07 & RDateTime>"2018-05-01 00:00:00", NA),
+#     #co2_flux=replace(co2_flux, ustar<0.07 & RDateTime>"2018-05-01 00:00:00", NA),
+#     #co2_flux=replace(co2_flux, abs(co2_flux)>20, NA),
+#     #absolute limit:
+#     ch4_flux=replace(ch4_flux, abs(ch4_flux)>500, NA),
+#     co2_flux=replace(co2_flux, abs(co2_flux)>15000, NA),
+#     LE = replace(LE, abs(LE)>1000, NA),
+#     H = replace(H, abs(H)>200, NA),
+#     rand_err_ch4_flux=replace(rand_err_ch4_flux, wind_dir>195 & wind_dir<330, NA),
+#     rand_err_ch4_flux=replace(rand_err_ch4_flux, abs(ch4_flux)>500, NA),
+#     year = year(RDateTime),
+#     monthday = format(RDateTime, format="%m-%d %H:%M")%>%
+#       as.POSIXct(monthday, format="%m-%d %H:%M", tz="UTC"))
+# ggplot(filter(epOutSubFiltU, RDateTime>"2018-05-01", co2_flux<100000), aes(ustar, co2_flux))+
+#   geom_point(alpha=0.1)+
+#   xlim(0, 0.3)+ 
+#   ylim(-100, 100)
+# ggplot(filter(epOutSubFiltU, RDateTime>"2018-05-01", co2_flux<100000), aes(ustar, ch4_flux))+
+#   geom_point(alpha=0.1)+
+#   xlim(0, 0.3)
+# ggplot(filter(epOutSubFiltU, RDateTime>"2018-05-01"), aes(ustar, H))+
+#   geom_point(alpha=0.1)+
+#   xlim(0, 0.3)
+
+
 ##Filter fluxes for QAQC parameters and replace with NAs using mutate: 
 epOutSubFilt<-epOutSub %>% 
   #epOutFilt.test<-ep.test2%>%
