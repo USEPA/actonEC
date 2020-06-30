@@ -39,3 +39,23 @@ spatioTemporal.s<-spread(spatioTemporal, key=key, value = value)
          
 write_csv(select(spatioTemporal.s, -siteT, -sdEbCh4mgM2h, -year, -monthday),
           path=paste0(projectWD, "/dataL2/Fig10data.csv"))
+
+### SI figure of 2018 lack of pattern:
+ggplot(filter(spatioTemporal, date>"2018-04-05", date<"2018-11-01"),
+       aes(date, value))+
+  annotate("rect", xmin=(as.Date("2018-08-02")),
+           xmax=(as.Date("2018-08-16")),
+           ymin=-Inf, ymax=Inf, alpha=0.2)+
+  annotate("rect", xmin=(as.Date("2018-09-10")),
+           xmax=(as.Date("2018-09-24")),
+           ymin=-Inf, ymax=Inf, alpha=0.6)+
+  geom_line(alpha=1, aes(color=as.factor(key)), size=0.5)+
+  scale_color_manual(values=c("#333333", "#CC0033"))+
+  geom_smooth(span=0.3, se=FALSE)+
+  facet_grid(key~site, scales="free_y")+
+  #scale_x_date(labels=date_format("%b", tz="UTC"), 
+  #                breaks=date_breaks("1 month"))+
+  xlab("")+
+  ylab(expression(~~~~~~~~~~sedT~(deg~C)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Ebullition~(mg~CH[4]~m^-2~hr^-1)))+
+  theme_bw()+
+  theme(legend.position="none")

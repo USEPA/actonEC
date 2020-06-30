@@ -277,29 +277,29 @@ write_csv(rLakeBuoySonde,
 
 profileTest<-filter(rLakeBuoySonde, datetime>"2018-04-01", datetime<"2018-11-01")
 
-wtr.heatmap.layers(profileTest,
-                   zlim=c(2, 32),
-                   key.title = title(main = "Celsius", cex.main = 1, line=1),
-                   plot.title = title(ylab = "Depth (m)",
-                                      main="Deep Site T Profile"),
-                   plot.axes = {axis.Date(side = 1, 
-                                          x=rLakeBuoySonde$datetime,
-                                          at=plotTicks,
-                                          format="%b %Y");
-                     axis(2)},
-                   borders="black")
-
-turnOver<-ts.thermo.depth(rLakeBuoySonde, Smin=0.1, na.rm=FALSE)
-
-
-ggplot(filter(turnOver, datetime>"2018-09-01", datetime<"2018-10-16"),
-       aes(datetime, thermo.depth*-1))+
-  geom_line()+
-  scale_x_datetime(labels=date_format("%b %d", tz="UTC"), 
-               breaks=date_breaks("2 days"),
-               limits = c(as.POSIXct(as.Date("2018-09-01")),
-                            as.POSIXct(as.Date("2018-10-16"))))+
-  ylim(-8, 0)
+# wtr.heatmap.layers(profileTest,
+#                    zlim=c(2, 32),
+#                    key.title = title(main = "Celsius", cex.main = 1, line=1),
+#                    plot.title = title(ylab = "Depth (m)",
+#                                       main="Deep Site T Profile"),
+#                    plot.axes = {axis.Date(side = 1, 
+#                                           x=rLakeBuoySonde$datetime,
+#                                           at=plotTicks,
+#                                           format="%b %Y");
+#                      axis(2)},
+#                    borders="black")
+# 
+# turnOver<-ts.thermo.depth(rLakeBuoySonde, Smin=0.1, na.rm=FALSE)
+# 
+# 
+# ggplot(filter(turnOver, datetime>"2018-09-01", datetime<"2018-10-16"),
+#        aes(datetime, thermo.depth*-1))+
+#   geom_line()+
+#   scale_x_datetime(labels=date_format("%b %d", tz="UTC"), 
+#                breaks=date_breaks("2 days"),
+#                limits = c(as.POSIXct(as.Date("2018-09-01")),
+#                             as.POSIXct(as.Date("2018-10-16"))))+
+#   ylim(-8, 0)
 #turnover occurred in 2017
 
 #https://stackoverflow.com/questions/41186998/controlling-x-axis-time-stamp-on-filled-contour-plot-r
