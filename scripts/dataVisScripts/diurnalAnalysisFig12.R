@@ -298,133 +298,6 @@ write.table(diurnal_stats,
             sep=",",
             row.names=FALSE)
 
-OUT_S1<-filter(OUT, Rdate<"2018-05-01")
-
-S1_pm<-355/460 #77% NAs
-S1_day<-328/460 #71% NAs
-S1_all<-404/460 #88% NAs, so 12% coverage, 56 days
-
-ggplot(OUT_S1, aes(perc_diff_med))+
-  geom_histogram()+
-  xlim(-200, 200)
-
-
-OUT_S2<-filter(OUT, Rdate>"2018-05-01")
-summary(OUT_S2)
-S2_pm<-72/196 #38% NAs
-S2_day<-58/196 #30% NAs
-S2_all<-84/196 #43% NAs, so 57% coverage, 112 days
-
-
-OUT$perc_diff<-(OUT$day_ch4-OUT$night_ch4)/OUT$night_ch4
-
-summary(OUT$perc_diff)
-OUT$Rdate<-as.Date(OUT$date, format="%m/%d/%Y")
-
-ggplot(filter(OUT, Rdate>"2018-05-31", Rdate<"2018-08-01"), aes(Rdate, perc_diff))+
-  geom_point(alpha=0.4)+
-  geom_line()+
-  ylim(-2, 2)
-
-ggplot(data.i, aes(RDateTime, ch4_flux))+
-  geom_point()
-
-  startdate.i<-weeklyD[i]
-  enddate.i<-weeklyD[i+1]
-  data1.i <- filter(diurnal.df2, RDateTime>startdate.i, RDateTime<=enddate.i)  # Pull out one week
-  data2.i <- filter(diurnal.df3, RDateTime>startdate.i, RDateTime<=enddate.i, 
-                    var == "a.ch4", var2 == "measured")
-  plot.i<-ggplot(data1.i,  aes(x = RDateTime, y = value)) + #version w/o site identifier 
-    geom_line(aes(color=as.factor(var2)))+
-    facet_grid(var~.,
-               scales="free")+
-    geom_point(data=filter(data1.i, var2=="measured", var=="a.ch4"), aes(RDateTime, value),
-               alpha=0.3, color="forest green", size=1)+
-    geom_point(data=filter(data1.i, var2=="measured", var=="b.LE"), aes(RDateTime, value),
-               alpha=0.3, color="forest green", size=1)+
-    #scale_color_brewer(type="div", palette=1, direction=1)+
-    #scale_color_manual(values=cbPalette)+
-    xlab("")
-  grid.arrange(plot.i) # use to put two plots per page
-  #theme_bw()
-  
-  plot.ii<-timeVariation(data2.i, pollutant="value",
-                         statistic="median",
-                         normalise=FALSE)
-  plot.iii<-plot(plot.ii, subset="hour")
-  
-}
-
-
-
-#######third go: chemistry data from vanni stream data collection 
-###https://portal.edirepository.org/nis/mapbrowse?packageid=edi.256.1
-  #Ammonia
-  #nitrate
-  #soluble reactive phosphorus
-  #suspended solids
-
-#still want LE
-
-filledSub<-select(filledFluxDat, datetime, FilledLE)
-
-filled.g<-gather(filledSub, 'FilledLE',
-                 key="var", value="value")
-filled.g$var2<-"driver"
-
-fluxSub<-select(filledFluxDat, datetime, ch4_flux, ch4_preds5.1)
-fluxSub<-fluxSub%>%
-  mutate(ch4_flux = ch4_flux*60*60*16/1000,
-         ch4_preds5.1 = ch4_preds5.1*60*60*16/1000)
-flux.g<-gather(fluxSub, 'ch4_flux', 'ch4_preds5.1', 
-               key="var", value="value")
-flux.g$var2<-ifelse(flux.g$var=="ch4_flux",
-                    "measured",
-                    "predicted")
-# chemSub<-(filter(dt4, DateTime>"2017-01-01"))
-# chemSub$datetime<-chemSub$DateTime
-# chemSub<-select(chemSub, -Site, -DateTime)
-# chem.g<-gather(chemSub, 'Ammonia', 'Nitrate', 'SolubleReactivePhosphorus', 'SuspendedSolids',
-#                key='var', value='value')
-DailyMassDelivery<-DailyMassDelivery%>%
-  mutate(datetime = date,
-         value = inletNutrients)
-chem.g<-as.data.frame(select(DailyMassDelivery, datetime, value, var))
-chem.g<-select(chem.g, -date)
-chem.g$var2<-"driver"
-mylist<-list()
-mylist[[1]]<-flux.g
-mylist[[2]]<-filled.g
-mylist[[3]]<-chem.g
-diurnal.df3<-do.call("rbind", mylist)
-
-diurnal.df3$var<-ifelse(diurnal.df3$var=="ch4_preds5.1",
-                        "ch4_flux",
-                        diurnal.df3$var)
-
-pdf(paste(myWD,"/figures/diurnal3.pdf", sep=""))
-#paper =  = "a4r") # landscape orientation
-for (i in 1:(round(as.numeric(diff(range(filledFluxDat$datetime))))/7)) {  # each combination of site and lake
-  startdate.i<-weeklyD[i]
-  enddate.i<-weeklyD[i+1]
-  data.i <- filter(diurnal.df3, datetime>startdate.i, datetime<=enddate.i)  # Pull out one week
-  plot.i <- ggplot(data.i,  aes(x = datetime, y = value)) + #version w/o site identifier 
-    geom_line(aes(color=as.factor(var2)), alpha=1)+
-    facet_grid(var~.,
-               scales="free")+
-    geom_point(data=filter(data.i, var2=="driver", var!="FilledLE"), aes(datetime, value),
-               alpha=0.5, color="red", size=1.5)+
-    geom_point(data=filter(data.i, var2=="measured"), aes(datetime, value),
-               alpha=0.3, color="forest green", size=1)+
-    #scale_color_brewer(type="div", palette=1, direction=1)+
-    #scale_color_manual(values=cbPalette)+
-    xlab("")
-  #theme_bw()
-  grid.arrange(plot.i, ncol = 1) # use to put two plots per page
-}
-
-
-dev.off() 
 
 
 
@@ -433,90 +306,15 @@ dev.off()
 
 
 
-#Example of low fluxes, no diurnal pattern:
-ggplot(filter(epOutSubFilt, RDateTime>"2017-03-29", RDateTime<"2017-04-10"), 
-       aes(RDateTime, ch4_flux))+
-  # annotate("rect", xmin=as.POSIXct(as.Date("2019-05-24")),
-  #          xmax=as.POSIXct(as.Date("2019-06-04")),
-  #          ymin=-Inf, ymax=Inf, alpha=0.5)+
-  geom_line(alpha=0.5, color="red")+
-  geom_point(alpha=0.1, color="red")+
-  # scale_x_datetime(date_breaks = "4 days",
-  #                  labels=date_format("%b %d"))+
-  ylim(-0.1, 0.3)
-#ylim(-10, 10)+
-facet_grid(year~.)
 
 
-noDlow<-filter(epOutSubFilt, RDateTime>"2017-03-29", RDateTime<"2017-04-10") 
-noDlow$date<-noDlow$RDateTime
-noDlow.p<-timeVariation(noDlow, pollutant="ch4_flux",
-                        statistic="median", 
-                        # xlab=c("hour", "hour of day, 2018",
-                        #        "month", "weekday"),
-                        normalise=FALSE)
-plot(noDlow.p, subset="hour")
 
-
-#Example of high fluxes, no diurnal pattern:
-ggplot(filter(epOutSubFilt, RDateTime>"2018-05-25", RDateTime<"2018-06-04"), 
-       aes(RDateTime, ch4_flux))+
-  # annotate("rect", xmin=as.POSIXct(as.Date("2019-05-24")),
-  #          xmax=as.POSIXct(as.Date("2019-06-04")),
-  #          ymin=-Inf, ymax=Inf, alpha=0.5)+
-  geom_line(alpha=0.5, color="red")+
-  geom_point(alpha=0.1, color="red")+
-  # scale_x_datetime(date_breaks = "4 days",
-  #                  labels=date_format("%b %d"))+
-  ylim(-0.1, 1.5)
-
-noDhigh<-filter(epOutSubFilt, RDateTime>"2018-05-25", RDateTime<"2018-06-04") 
-noDhigh$date<-noDhigh$RDateTime
-noDhigh.p<-timeVariation(noDhigh, pollutant="ch4_flux",
-                        statistic="median", 
-                        # xlab=c("hour", "hour of day, 2018",
-                        #        "month", "weekday"),
-                        normalise=FALSE)
-plot(noDhigh.p, subset="hour")
 
 
 #Example of diurnal pattern, in phase with LE:
 #before and after spring burst
 
-#Trying to collapse x-axis around the spring burst
-#https://stackoverflow.com/questions/35511951/r-ggplot2-collapse-or-remove-segment-of-y-axis-from-scatter-plot
-library(scales)
-squish_trans <- function(from, to, factor) {
-  
-  trans <- function(x) {
-    
-    # get indices for the relevant regions
-    isq <- x > from & x < to
-    ito <- x >= to
-    
-    # apply transformation
-    x[isq] <- from + (x[isq] - from)/factor
-    x[ito] <- from + (to - from)/factor + (x[ito] - to)
-    
-    return(x)
-  }
-  
-  inv <- function(x) {
-    
-    # get indices for the relevant regions
-    isq <- x > from & x < from + (to - from)/factor
-    ito <- x >= from + (to - from)/factor
-    
-    # apply transformation
-    x[isq] <- from + (x[isq] - from) * factor
-    x[ito] <- to + (x[ito] - (from + (to - from)/factor))
-    
-    return(x)
-  }
-  
-  # return the transformation
-  return(trans_new("squished", trans, inv))
-}
+
 
 
 epOutSubFilt<-epOutSubFilt%>%
@@ -527,11 +325,7 @@ epOutSubFilt<-epOutSubFilt%>%
          yesDhighInd = replace(yesDhighInd, RDateTime>"2018-06-04" & RDateTime<"2018-06-06", 1),
          BurstInd = replace(BurstInd, RDateTime>"2018-06-04" & RDateTime<"2018-06-06", "b. Post-Burst"))
 
-# squishStart<-as.numeric(epOutSubFilt$RDateTime[7000])
-# squishEnd<-as.numeric(epOutSubFilt$RDateTime[7400])
-# squishFactor<-60*60*24*3
-# epOutSubFilt$timeNumeric<-as.numeric(epOutSubFilt$RDateTime)
-# sum(is.na(epOutSubFilt$timeNumeric))
+
 
 diurnalLE<-filter(epOutSubFilt, yesDhighInd==1, ch4_flux<1.25)
 
@@ -568,7 +362,7 @@ ggsave(filename="plots/SI_ch4vsLE.tiff",
 #   #ylim(-0.1, 1.5)
 
 
-#Figure 11 ingredients:
+#Figure 12 ingredients:
 #ggplot(filter(epOutSubFilt, yesDhighInd==1, ch4_flux<1.25, BurstInd=="a. Pre-Burst"),
 ggplot(filter(epOutSubFilt, RDateTime<"2018-05-24 20:30:00", RDateTime>"2018-05-22 09:30", ch4_flux<1.25),
        aes(RDateTime, ch4_flux/1000*60*60*16))+
@@ -595,7 +389,7 @@ ggplot(filter(epOutSubFilt, RDateTime<"2018-05-24 20:30:00", RDateTime>"2018-05-
                               as.POSIXct(("2018-05-23 12:00"), tz="UTC"),
                               as.POSIXct(("2018-05-24 12:00"), tz="UTC")),
                     labels=date_format("%Y-%m-%d %H:%M"))
-ggsave(filename=paste0(projectWD, "/figures/diurnalFig11a.tiff"), #if this doesn't work, save with resolution of 450 x 450 
+ggsave(filename=paste0(projectWD, "/figures/diurnalFig12a.tiff"), #if this doesn't work, save with resolution of 450 x 450 
        width=5.25,height=3, units="in",
        dpi=800,compression="lzw")
 
@@ -625,14 +419,14 @@ ggplot(filter(epOutSubFilt, yesDhighInd==1, ch4_flux<1.25, BurstInd=="b. Post-Bu
                    breaks= c(as.POSIXct(("2018-06-04 12:00"), tz="UTC"),
                                    as.POSIXct(("2018-06-05 12:00"), tz="UTC")),
                    labels=date_format("%Y-%m-%d %H:%M"))
-ggsave(filename="plots/diurnalFig11ai_noLoess.tiff", #if this doesn't work, save with resolution of 450 x 450 
+ggsave(filename="figures/diurnalFig12ai_noLoess.tiff", #if this doesn't work, save with resolution of 450 x 450 
        width=4.5,height=3, units="in",
        dpi=800,compression="lzw")
 
 library(RColorBrewer)
 
 
-#Panel c of Figure 11: aggregated diurnal patterns of Fch4 and LE
+#Panel c of Figure 12: aggregated diurnal patterns of Fch4 and LE
 yesDhigh<-filter(epOutSubFilt, yesDhighInd==1, ch4_flux<1.25) 
 yesDhigh$date<-yesDhigh$RDateTime
 yesDhigh.p<-timeVariation(yesDhigh, pollutant=c("ch4_flux", "LE"),
@@ -643,7 +437,7 @@ yesDhigh.p<-timeVariation(yesDhigh, pollutant=c("ch4_flux", "LE"),
                          cols=c("blue","dark grey"))
 plot(yesDhigh.p, subset="hour", theme.legend=NULL)
 
-ggsave(filename="plots/diurnalFig11c.tiff", #if this doesn't work, save with resolution of 450 x 450 
+ggsave(filename="figures/diurnalFig12c.tiff", #if this doesn't work, save with resolution of 450 x 450 
        width=3,height=3, units="in",
        dpi=800,compression="lzw")
 
@@ -684,7 +478,7 @@ ggplot(filter(epOutSubFilt, RDateTime>"2018-08-26 10:00", RDateTime<"2018-08-31"
   theme_bw()+
    scale_x_datetime(date_breaks = "24 hours",
                    labels=date_format("%Y-%m-%d %H:%M"))
-ggsave(filename=paste0(projectWD, "/figures/diurnalFig11b.tiff"), #if this doesn't work, save with resolution of 450 x 450 
+ggsave(filename=paste0(projectWD, "/figures/diurnalFig12b.tiff"), #if this doesn't work, save with resolution of 450 x 450 
        width=9.5,height=3, units="in",
        dpi=800,compression="lzw")
 

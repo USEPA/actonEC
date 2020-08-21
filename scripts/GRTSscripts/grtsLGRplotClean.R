@@ -6,7 +6,7 @@
 #filter(gga, is.na(gga$RDateTime))
 # there are a bunch of NA for this field, likely related to corrupt LGR files.  Will just strip out for now.
 gga <- filter(gga, !is.na(gga$RDateTime))  # strip out missing RDateTime.  They complicate functions below.
-str(gga)
+#str(gga)
 
 #2.  LOOP TO ASSIGN LAKE NAME, SITEID, AND DEPLY TIME TO LGR OBSERVATIONS.
 # Many rows in eqAreaData have NA for chmDeplyDtTm.  For example, at all oversample
@@ -39,7 +39,8 @@ gga[ , c("co2DeplyDtTm", "co2RetDtTm", "ch4DeplyDtTm", "ch4RetDtTm")] <-
   lapply(gga[ , c("co2DeplyDtTm", "co2RetDtTm", "ch4DeplyDtTm", "ch4RetDtTm")], 
          as.POSIXct, origin = "1970-01-01 00:00:00", tz= "UTC")  # set tz!
 
-#3. RECORD ADJUSTMENTS TO TIME SERIES PLOTS
+##3. RECORD ADJUSTMENTS TO TIME SERIES PLOTS
+## These adjusted times were determined via visual inspection of the time series data
 # Lake_Name,       siteID,     co2DeplyDtTm,            co2RetDtTm,          ch4DeplyDtTm,        ch4RetDtTm
 # This order is critical!
 adjDataGRTS <- c("Acton Lake 2017 July", "U-14", "2017-07-10 12:34:20", "2017-07-10 12:39:00", "2017-07-10 12:34:20", "2017-07-10 12:38:40",
@@ -192,6 +193,7 @@ for (i in 1:with(adjDataDfGRTS, length(unique(paste(siteID, Lake_Name))))) { # f
 
 #5.  PLOT CO2 AND CH4 PROFILES FOR INSPECTION
 
+if(plotCO2CH4profiles == "yes") {
 pdf("figures/ggaProfileGRTS.pdf", paper = "a4r") # landscape orientation
 
 for (i in 1:with(gga[!is.na(gga$Lake_Name), ], # this eliminates observations without a Lake_Name (LGR data when chamber not deployed)
@@ -230,7 +232,7 @@ dev.off()
 #should be 15 * number of GRTS survey pages
 #only takes < 1 min
 
-
+}
 
 
 

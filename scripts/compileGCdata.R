@@ -263,16 +263,16 @@ actonTrapAgg2$monthday<-as.Date(actonTrapAgg2$monthday, format="%m-%d")
 
 ## Same as time series above, but with mean and sd values
 
-
-ggplot(actonTrapAgg2, aes(monthday, meanCH4/10000))+
-  geom_jitter(aes(color=SiteDesc))+
-  geom_errorbar(aes(color=SiteDesc, ymin=((meanCH4-sdCH4)/10000), ymax =((meanCH4+sdCH4)/10000)))+
-  scale_x_date(date_breaks = "1 month", date_labels="%b-%d")+
-  facet_grid(year~.)+
-  theme(axis.text.x=element_text(angle=60, hjust=1))+
-  labs(x = "Date", y = "Trap Gas %CH4")+
-  ylim(0, 100)+
-  theme_bw()
+## Plot of aggregated %CH4 in AFT gas
+# ggplot(actonTrapAgg2, aes(monthday, meanCH4/10000))+
+#   geom_jitter(aes(color=SiteDesc))+
+#   geom_errorbar(aes(color=SiteDesc, ymin=((meanCH4-sdCH4)/10000), ymax =((meanCH4+sdCH4)/10000)))+
+#   scale_x_date(date_breaks = "1 month", date_labels="%b-%d")+
+#   facet_grid(year~.)+
+#   theme(axis.text.x=element_text(angle=60, hjust=1))+
+#   labs(x = "Date", y = "Trap Gas %CH4")+
+#   ylim(0, 100)+
+#   theme_bw()
 
 write.table(actonTrapAgg2,
             file="dataL2/actonTrapAgg.csv",

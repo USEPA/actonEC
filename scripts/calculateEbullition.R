@@ -279,21 +279,21 @@ hoboU12qc<-hoboU12%>%
   mutate(hgSmth = replace(hgSmth, abs(heightFE)>qc_thresh12, NA),
          heightFE = replace(heightFE, abs(heightFE)>qc_thresh12, NA))
 
-ggplot(hoboU12qc, aes(date.timeHH, heightFE))+
-  geom_line()
+# ggplot(hoboU12qc, aes(date.timeHH, heightFE))+
+#   geom_line()
 
 hoboU14qc<-hoboU14%>%
   mutate(hgSmth = replace(hgSmth, abs(heightFE)>qc_thresh14, NA),
          heightFE = replace(heightFE, abs(heightFE)>qc_thresh14, NA))
 
-ggplot(hoboU14qc, aes(date.timeHH, heightFE))+
-  geom_line()
+# ggplot(hoboU14qc, aes(date.timeHH, heightFE))+
+#   geom_line()
 
 
 ## why does the shallow site 2017 have much higher error than other site/years? Could be due to concentration error
 
-summary(filter(hoboU14qc, date.timeHH<"2018-01-01"))
-summary(filter(hoboU14qc, date.timeHH>"2018-01-01"))
+#summary(filter(hoboU14qc, date.timeHH<"2018-01-01"))
+#summary(filter(hoboU14qc, date.timeHH>"2018-01-01"))
 
 ###3: Convert from smooth height to volume (cm3) ----
 ##U12 had a large-diameter tube until 6/12/2017 at 12:00, when a small diameter tube was deployed as the replacement for the missing trap
@@ -572,32 +572,32 @@ df12.gc<-df12.gc %>% mutate(meanCH4interp = na.approx(meanCH4, rule=2),
                             sdN2Ointerp = na.approx(sdN2O, rule=2),
                             ch4FE = sdCH4interp/meanCH4interp)
 
-ggplot(filter(df12.gc, !is.na(year.x)), aes(monthday.x, ch4FE))+
-  geom_line()+
-  geom_point(aes(monthday.x, volFE), alpha=0.1)+
-  facet_grid(year.x~.)
-
-testP1<-ggplot(df14.gc, aes(date.time, meanCH4/10^4))+
-  geom_errorbar(ymin=(df14.gc$meanCH4-df14.gc$sdCH4)/10^4,
-                ymax=(df14.gc$meanCH4+df14.gc$sdCH4)/10^4,
-                alpha=0.3)
-testP1+geom_line(data=df14.gc, aes(date.time, meanCH4interp/10^4), alpha=0.3)+
-  theme_bw()+
-  scale_x_datetime(breaks=date_breaks("2 month"),
-                   labels=date_format("%b %Y"))+
-  ylab("Shallow Site % CH4")
-  facet_grid(year.x~.)
-testP2<-ggplot(df12.gc, aes(date.time, meanCH4/10^4))+
-  geom_errorbar(ymin=(df12.gc$meanCH4-df12.gc$sdCH4)/10^4,
-                ymax=(df12.gc$meanCH4+df12.gc$sdCH4)/10^4,
-                alpha=0.3)
-testP2+geom_line(data=df12.gc, aes(date.time, meanCH4interp/10^4), alpha=0.7)+
-  #geom_line(aes(date.time, (meanCH4interp+sdCH4interp)/10^4), alpha=0.2)+
-  #geom_line(aes(date.time, (meanCH4interp-sdCH4interp)/10^4), alpha=0.2)+
-  theme_bw()+
-  scale_x_datetime(breaks=date_breaks("2 month"),
-                   labels=date_format("%b %Y"))+
-  ylab("Deep Site % CH4")
+# ggplot(filter(df12.gc, !is.na(year.x)), aes(monthday.x, ch4FE))+
+#   geom_line()+
+#   geom_point(aes(monthday.x, volFE), alpha=0.1)+
+#   facet_grid(year.x~.)
+# 
+# testP1<-ggplot(df14.gc, aes(date.time, meanCH4/10^4))+
+#   geom_errorbar(ymin=(df14.gc$meanCH4-df14.gc$sdCH4)/10^4,
+#                 ymax=(df14.gc$meanCH4+df14.gc$sdCH4)/10^4,
+#                 alpha=0.3)
+# testP1+geom_line(data=df14.gc, aes(date.time, meanCH4interp/10^4), alpha=0.3)+
+#   theme_bw()+
+#   scale_x_datetime(breaks=date_breaks("2 month"),
+#                    labels=date_format("%b %Y"))+
+#   ylab("Shallow Site % CH4")+
+#   facet_grid(year.x~.)
+# testP2<-ggplot(df12.gc, aes(date.time, meanCH4/10^4))+
+#   geom_errorbar(ymin=(df12.gc$meanCH4-df12.gc$sdCH4)/10^4,
+#                 ymax=(df12.gc$meanCH4+df12.gc$sdCH4)/10^4,
+#                 alpha=0.3)
+# testP2+geom_line(data=df12.gc, aes(date.time, meanCH4interp/10^4), alpha=0.7)+
+#   #geom_line(aes(date.time, (meanCH4interp+sdCH4interp)/10^4), alpha=0.2)+
+#   #geom_line(aes(date.time, (meanCH4interp-sdCH4interp)/10^4), alpha=0.2)+
+#   theme_bw()+
+#   scale_x_datetime(breaks=date_breaks("2 month"),
+#                    labels=date_format("%b %Y"))+
+#   ylab("Deep Site % CH4")
 
 ###----
 #Declare Constants:
@@ -642,13 +642,13 @@ df12.gc<-mutate(df12.gc,
 
 
 
-ggplot(df14.gc, aes(ebCh4mgM2hFE))+
-  geom_histogram()+
-  xlim(-0.1, 1.5)
-
-summary(df14.gc$ebCh4mgM2hFE)
-summary(df14.gc$ch4FE^2)
-summary(df14.gc$volFE^2)
+# ggplot(df14.gc, aes(ebCh4mgM2hFE))+
+#   geom_histogram()+
+#   xlim(-0.1, 1.5)
+# 
+# summary(df14.gc$ebCh4mgM2hFE)
+# summary(df14.gc$ch4FE^2)
+# summary(df14.gc$volFE^2)
 
 #ggplot(df14.gc, aes(date.timeHH, ebCo2mgM2h))+
 
@@ -690,16 +690,16 @@ DailyShalFluxes$monthday<-as.Date(DailyShalFluxes$monthday, format="%m-%d %H:%M"
 
 DailyShalFluxes$Rdate <- as.Date(DailyShalFluxes$date)
 
-ggplot(filter(DailyShalFluxes, monthday>"2020-05-01"), aes(monthday, meanCH4Flux))+
-  geom_line()+
-  geom_line(aes(monthday, meanCH4Flux+dailyCH4VolErr), alpha=0.3)+
-  geom_line(aes(monthday, meanCH4Flux-dailyCH4VolErr), alpha=0.3)+
-  geom_line(aes(monthday, meanCH4Flux+dailyCH4TErr), alpha=0.3, color="#FF6699")+
-  geom_line(aes(monthday, meanCH4Flux-dailyCH4TErr), alpha=0.3, color="#FF6699")+
-  facet_grid(year~.)+
-  #ylim(-40, 70)+
-  ylab("Shallow Site Daily Fluxes (mg Ch4 m-2 h-1)")+
-  theme_bw()
+# ggplot(filter(DailyShalFluxes, monthday>"2020-05-01"), aes(monthday, meanCH4Flux))+
+#   geom_line()+
+#   geom_line(aes(monthday, meanCH4Flux+dailyCH4VolErr), alpha=0.3)+
+#   geom_line(aes(monthday, meanCH4Flux-dailyCH4VolErr), alpha=0.3)+
+#   geom_line(aes(monthday, meanCH4Flux+dailyCH4TErr), alpha=0.3, color="#FF6699")+
+#   geom_line(aes(monthday, meanCH4Flux-dailyCH4TErr), alpha=0.3, color="#FF6699")+
+#   facet_grid(year~.)+
+#   #ylim(-40, 70)+
+#   ylab("Shallow Site Daily Fluxes (mg Ch4 m-2 h-1)")+
+#   theme_bw()
 
 
 DailyDeepFluxes<-df12.gc %>%
@@ -713,104 +713,19 @@ DailyDeepFluxes<-DailyDeepFluxes%>%
          year = year(date))# %>%
 DailyDeepFluxes$monthday<-as.Date(DailyDeepFluxes$monthday, format="%m-%d %H:%M")
 
-ggplot(filter(DailyDeepFluxes, monthday>"2020-05-01"), aes(monthday, meanCH4Flux))+
-  geom_line()+
-  geom_line(aes(monthday, meanCH4Flux+dailyCH4VolErr), alpha=0.3)+
-  geom_line(aes(monthday, meanCH4Flux-dailyCH4VolErr), alpha=0.3)+
-  geom_line(aes(monthday, meanCH4Flux+dailyCH4TErr), alpha=0.3, color="#FF6699")+
-  geom_line(aes(monthday, meanCH4Flux-dailyCH4TErr), alpha=0.3, color="#FF6699")+
-  facet_grid(year~.)+
-  ylim(-20, 40)+
-  ylab("Deep Site Daily Fluxes (mg Ch4 m-2 h-1)")+
-  theme_bw()
+# ggplot(filter(DailyDeepFluxes, monthday>"2020-05-01"), aes(monthday, meanCH4Flux))+
+#   geom_line()+
+#   geom_line(aes(monthday, meanCH4Flux+dailyCH4VolErr), alpha=0.3)+
+#   geom_line(aes(monthday, meanCH4Flux-dailyCH4VolErr), alpha=0.3)+
+#   geom_line(aes(monthday, meanCH4Flux+dailyCH4TErr), alpha=0.3, color="#FF6699")+
+#   geom_line(aes(monthday, meanCH4Flux-dailyCH4TErr), alpha=0.3, color="#FF6699")+
+#   facet_grid(year~.)+
+#   ylim(-20, 40)+
+#   ylab("Deep Site Daily Fluxes (mg Ch4 m-2 h-1)")+
+#   theme_bw()
 
 
 rm(vMinTest12, vMinTest14, vZeroBar12, vZeroBar14, deltaVzero12, deltaVzero14, vMinRollSd12, vMinRollSd14)
 rm(testP1, testP2)
 
-############## Comparison with Jake's calcs
 
-# jake.eb<-read_delim(file="data/activeTrapForCloudCopy.txt",
-#                             delim=" ")
-# jake.eb<-jake.eb%>%
-#   mutate(site = replace(site, site == "u12", "deep"),
-#          site = replace(site, site == "u14", "shallow"),
-#          dataset = "JB")
-# dailyEb$dataset<-"SW"
-# dailyEb$Rdate<-dailyEb$date
-# 
-# ggplot(filter(jake.eb, lake == "acton"), aes(Rdate, ebMlDM2))+
-#   geom_line(aes(color=dataset))+
-#   geom_line(data=filter(dailyEb, date<"2018-01-01"),  aes(date, dailyVolEb2*24, color=dataset))+
-#   facet_grid(site~.)
-# 
-# jake.eb.acton<-filter(jake.eb, lake=="acton")%>%
-#   select(Rdate, site, ebMlDM2, dataset)%>%
-#   spread(key=site, value=ebMlDM2)
-# 
-# sarah.eb<-filter(dailyEb, Rdate<"2018-01-01")%>%
-#   select(Rdate, site, dailyVolEb2, dataset)%>%
-#   spread(key=site, value=dailyVolEb2)
-# 
-# sarah.eb$deep_SW<-sarah.eb$deep*24
-# sarah.eb$shallow_SW<-sarah.eb$shallow*24  
-# 
-# compare.eb<-left_join(jake.eb.acton,
-#                        select(sarah.eb, -shallow, -deep),
-#                        by="Rdate")
-# 
-# #https://rpkgs.datanovia.com/ggpubr/reference/stat_regline_equation.html
-# library(ggpubr)
-# ggscatter(compare.eb, x="deep", y="deep_SW", add="reg.line")+
-#   stat_cor(label.x.npc=0.2, label.y.npc=0.9)+
-#   stat_regline_equation(label.x.npc = 0.2, label.y.npc=0.85)+
-#   xlim(-100, 1500)+
-#   ylim(-100, 1500)
-# 
-# ggscatter(compare.eb, x="shallow", y="shallow_SW", add="reg.line")+
-#   stat_cor(label.x.npc=0.2, label.y.npc=0.9)+
-#   stat_regline_equation(label.x.npc = 0.2, label.y.npc=0.85)+
-#   xlim(-100, 1500)+
-#   ylim(-100, 1500)
-# 
-# shallow.lm<-
-# 
-# ggplot(compare.eb, aes(shallow, shallow_SW))+
-#   geom_point(alpha=0.3)+
-#   stat_smooth(method="lm")+
-#   stat_regline_equation(
-#     aes(label=paste(..eq.label.., ..adj.rr.label.., sep="~~~")),
-#     formula=(shallow_SW~shallow))+
-#   theme_bw()
-#   )
-# 
-# ggplot(compare.eb, aes(deep, deep_SW))+
-#   geom_point(alpha=0.3)
-# 
-# #cumulative emissions:
-# 
-# compare.eb.cml<-compare.eb%>%
-#   mutate(deep = replace(deep, is.na(deep), 0),
-#          deep_SW = replace(deep_SW, is.na(deep_SW), 0),
-#          shallow = replace(shallow, is.na(shallow), 0),
-#          shallow_SW = replace(shallow_SW, is.na(shallow_SW), 0),
-#          deep_cml = cumsum(deep),
-#          deep_SW_cml = cumsum(deep_SW),
-#          shallow_cml = cumsum(shallow),
-#          shallow_SW_cml = cumsum(shallow_SW))
-# 
-# ggplot(compare.eb.cml, aes(Rdate, deep_cml))+
-#   geom_line(color="#FF6699")+
-#   geom_line(aes(Rdate, deep_SW_cml), color="#00CC99")
-# 
-# ggplot(compare.eb.cml)+
-#   geom_line(aes(Rdate, shallow_cml), color="#FF6699")+
-#   geom_line(aes(Rdate, shallow_SW_cml), color="#00CC99")
-# 
-# difference=(compare.eb.cml$deep_cml[nrow(compare.eb.cml)]-compare.eb.cml$deep_SW_cml[nrow(compare.eb.cml)])
-# bias = difference/compare.eb.cml$deep_SW_cml[nrow(compare.eb.cml)]
-# bias*100
-# 
-# difference=(compare.eb.cml$shallow_cml[nrow(compare.eb.cml)]-compare.eb.cml$shallow_SW_cml[nrow(compare.eb.cml)])
-# bias = difference/compare.eb.cml$shallow_cml[nrow(compare.eb.cml)]
-# bias*100

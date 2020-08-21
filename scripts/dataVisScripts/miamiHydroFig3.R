@@ -248,7 +248,7 @@ names(myDeepTList[[5]])<-names(myDeepTList[[1]])
 rLakeBuoySonde<-do.call("rbind", myDeepTList)
 rLakeBuoySonde<-rLakeBuoySonde[order(rLakeBuoySonde$datetime),]
 
-rLakeBuoySonde2$datetime[32]
+rLakeBuoySonde$datetime[32]
 rLakeBuoySonde$datetime<-as.POSIXct(rLakeBuoySonde$datetime, tz="UTC")
 rLakeBuoySonde2<-as.data.frame(rLakeBuoySonde)
 rLakeBuoySonde2$datetime<-rLakeBuoySonde$datetime

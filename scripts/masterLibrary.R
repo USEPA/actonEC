@@ -33,6 +33,7 @@ library(zoo)
 library(REddyProc)
 library(openair)
 library(wesanderson)
+library(scatterplot3d)
 
 #threshold test attempts
 #library(Peacock.test)

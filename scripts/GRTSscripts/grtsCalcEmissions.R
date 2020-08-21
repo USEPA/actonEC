@@ -25,6 +25,7 @@ OUT <- data.frame(site = temp, Lake_Name = temp,
 
 # Remove data not recorded during deployment
 gga.model <- filter(gga, !is.na(Lake_Name))
+
 pdf("figures/curveFitsGRTS.pdf")
 start.time <- Sys.time()
 for (i in 1:length(unique(paste(gga.model$Lake_Name, gga.model$siteID)))) {  # For each unique site
@@ -237,9 +238,9 @@ OUT <- mutate(OUT,
                                       "linear", "exponential"),
               ch4.drate.mg.h.best = ifelse(ch4.best.model == "linear",
                                            ch4.lm.drate.mg.h, ch4.ex.drate.mg.h)) 
-# Inspect r2.
-plot(with(OUT,ifelse(co2.best.model == "linear", co2.lm.r2, co2.ex.r2)))  # CO2: some low ones to investigate
-plot(with(OUT,ifelse(ch4.best.model == "linear", ch4.lm.r2, ch4.ex.r2)))  # CH4:  some low ones to investigate
+## Inspect r2.
+#plot(with(OUT,ifelse(co2.best.model == "linear", co2.lm.r2, co2.ex.r2)))  # CO2: some low ones to investigate
+#plot(with(OUT,ifelse(ch4.best.model == "linear", ch4.lm.r2, ch4.ex.r2)))  # CH4:  some low ones to investigate
 
 # If r2 of best model < 0.9 for CH4; 0.8 for CO2, then set to NA
 OUT <- mutate(OUT, 
@@ -255,12 +256,12 @@ OUT <- mutate(OUT,
                                                   NA, # the NA
                                                   ch4.drate.mg.h.best))) # otherwise assume value defined above
 
-# Inspect r2 after scrubbing r2<0.9
-plot(with(OUT[!is.na(OUT$co2.drate.mg.h.best),], 
-          ifelse(co2.best.model == "linear", co2.lm.r2, co2.ex.r2)))  # CO2: all > 0.9
+## Inspect r2 after scrubbing r2<0.9
+#plot(with(OUT[!is.na(OUT$co2.drate.mg.h.best),], 
+#          ifelse(co2.best.model == "linear", co2.lm.r2, co2.ex.r2)))  # CO2: all > 0.9
 
-plot(with(OUT[!is.na(OUT$ch4.drate.mg.h.best),], 
-          ifelse(ch4.best.model == "linear", ch4.lm.r2, ch4.ex.r2)))  # CH4: all > 0.9
+#plot(with(OUT[!is.na(OUT$ch4.drate.mg.h.best),], 
+#          ifelse(ch4.best.model == "linear", ch4.lm.r2, ch4.ex.r2)))  # CH4: all > 0.9
 
 # STEP 3: MERGE DIFFUSION RATES WITH eqAreaData
 # First, strip NA from OUT
@@ -268,15 +269,14 @@ OUT <- filter(OUT, !is.na(Lake_Name)) # Just one NA slipped in
 eqAreaData <- merge(eqAreaData, OUT, by.x = c("Lake_Name", "siteID"), 
                     by.y = c("Lake_Name", "site"), all=TRUE)
 
-str(eqAreaData) # 210 observations. 35 sites * 3 surveys * 2 years = 210. Only 90 msmts: 15*6
+#str(eqAreaData) # 210 observations. 35 sites * 3 surveys * 2 years = 210. Only 90 msmts: 15*6
 
-# Any sites not have a diffusive rate?
-# Only a subset of Cowan Lake sites were sampled due to water in LGR.
-# Other sites had strong ebullition in LGR profile.
-filter(eqAreaData, EvalStatus == "sampled", !is.na(ch4.drate.mg.h.best)) %>%
-  select(Lake_Name, siteID, 
-         ch4.lm.drate.mg.h, ch4.ex.drate.mg.h, ch4.drate.mg.h.best,
-         co2.lm.drate.mg.h, co2.ex.drate.mg.h, co2.drate.mg.h.best)
+## Any sites not have a diffusive rate?
+## Some sites had strong ebullition in LGR profile.
+# filter(eqAreaData, EvalStatus == "sampled", !is.na(ch4.drate.mg.h.best)) %>%
+#   select(Lake_Name, siteID, 
+#          ch4.lm.drate.mg.h, ch4.ex.drate.mg.h, ch4.drate.mg.h.best,
+#          co2.lm.drate.mg.h, co2.ex.drate.mg.h, co2.drate.mg.h.best)
 
 
 
@@ -389,55 +389,54 @@ filter(xtrCodes.gas, is.na(xtrCodes.gas$co2.ppm)) %>% arrange(variable, value)
 
 # QA/QC GC REPS--------------
 
-#pdf("C:/R_Projects/actonFluxProject/figures/scatterplot3dTrap.pdf",
-pdf("figures/scatterplot3dTrap.pdf",
-    paper = "a4r", width = 11, height = 8)  # initiate landscape pdf file)
-par(mfrow = c(1,2))
-
-uniqueCases <- filter(xtrCodes.gas, variable == "tp.xtr", # trap sample
-                      !is.na(ch4.ppm), # has GC data
-                      !is.na(Lake_Name)) %>% # is connected with Lake and station
-  distinct(Lake_Name, siteID) # unique combinations of lake and site
-
-for(i in 1:length(uniqueCases$Lake_Name)) {
-  site.i <- uniqueCases$siteID[i]
-  lake.i <- uniqueCases$Lake_Name[i]
-  data.i <- filter(xtrCodes.gas,
-                   siteID == site.i, Lake_Name == lake.i,
-                   !is.na(ch4.ppm), variable == "tp.xtr")
-  
-  # CO2, CH4, N2 scatterplot
-  try(
-    with(data.i, {
-      
-      s3d <- scatterplot3d(co2.ppm/10000, ch4.ppm/10000, n2,
-                           xlab = "CO2 (%)", ylab = "CH4 (%)", zlab = "N2 (%)",
-                           pch=21, bg = "red", main = uniqueCases[i, ])
-      
-      s3d.coords <- s3d$xyz.convert(co2.ppm/10000, ch4.ppm/10000, n2)
-      text(s3d.coords$x, s3d.coords$y,             # x and y coordinates
-           labels=value,               # text to plot
-           cex=.5, pos=4)           # shrink text 50% and place to right of points)
-    }),
-    silent = TRUE)
-  
-  # n2o, o2, ar scatterplot
-  try(
-    with(data.i, {
-      
-      s3d <- scatterplot3d(n2o.ppm, o2, ar,
-                           xlab = "N2O (ppm)", ylab = "O2 (%)", zlab = "ar (%)",
-                           pch=21, bg = "red", main = uniqueCases[i, ])
-      
-      s3d.coords <- s3d$xyz.convert(n2o.ppm, o2, ar)
-      text(s3d.coords$x, s3d.coords$y,             # x and y coordinates
-           labels=value,               # text to plot
-           cex=.5, pos=4)           # shrink text 50% and place to right of points)
-    }),
-    silent = TRUE)
-  
-}
-dev.off()
+# pdf("figures/scatterplot3dTrap.pdf",
+#     paper = "a4r", width = 11, height = 8)  # initiate landscape pdf file)
+# par(mfrow = c(1,2))
+# 
+# uniqueCases <- filter(xtrCodes.gas, variable == "tp.xtr", # trap sample
+#                       !is.na(ch4.ppm), # has GC data
+#                       !is.na(Lake_Name)) %>% # is connected with Lake and station
+#   distinct(Lake_Name, siteID) # unique combinations of lake and site
+# 
+# for(i in 1:length(uniqueCases$Lake_Name)) {
+#   site.i <- uniqueCases$siteID[i]
+#   lake.i <- uniqueCases$Lake_Name[i]
+#   data.i <- filter(xtrCodes.gas,
+#                    siteID == site.i, Lake_Name == lake.i,
+#                    !is.na(ch4.ppm), variable == "tp.xtr")
+#   
+#   # CO2, CH4, N2 scatterplot
+#   try(
+#     with(data.i, {
+#       
+#       s3d <- scatterplot3d(co2.ppm/10000, ch4.ppm/10000, n2,
+#                            xlab = "CO2 (%)", ylab = "CH4 (%)", zlab = "N2 (%)",
+#                            pch=21, bg = "red", main = uniqueCases[i, ])
+#       
+#       s3d.coords <- s3d$xyz.convert(co2.ppm/10000, ch4.ppm/10000, n2)
+#       text(s3d.coords$x, s3d.coords$y,             # x and y coordinates
+#            labels=value,               # text to plot
+#            cex=.5, pos=4)           # shrink text 50% and place to right of points)
+#     }),
+#     silent = TRUE)
+#   
+#   # n2o, o2, ar scatterplot
+#   try(
+#     with(data.i, {
+#       
+#       s3d <- scatterplot3d(n2o.ppm, o2, ar,
+#                            xlab = "N2O (ppm)", ylab = "O2 (%)", zlab = "ar (%)",
+#                            pch=21, bg = "red", main = uniqueCases[i, ])
+#       
+#       s3d.coords <- s3d$xyz.convert(n2o.ppm, o2, ar)
+#       text(s3d.coords$x, s3d.coords$y,             # x and y coordinates
+#            labels=value,               # text to plot
+#            cex=.5, pos=4)           # shrink text 50% and place to right of points)
+#     }),
+#     silent = TRUE)
+#   
+# }
+# dev.off()
 
 # Aggregate by Lake_Name and siteID, for now
 

@@ -76,8 +76,8 @@ dailyMassFlux12<-left_join(dailyMassFlux12, select(U12sonde, sondeTmpr, date), b
 
 ## Sonde measurements were physical samples taken bi-weekly by the EPA crew
 ## This is a QC step
-ggplot(U12sonde, aes(date, sondeTmpr))+
-  geom_point(aes(color=sondeDepth))
+# ggplot(U12sonde, aes(date, sondeTmpr))+
+#   geom_point(aes(color=sondeDepth))
 
 lmSondeBuoy<-lm(sedTbuoy ~ sondeTmpr, data=dailyMassFlux12)
 summary(lmSondeBuoy) #R2 = 0.94, slope = 0.99
@@ -94,11 +94,11 @@ dailyMassFlux12<-dailyMassFlux12 %>%
                                #rule=1)) #rule=1 means it will return the NA outside of the interval
                                rule=2)) #rule=2 means it will return the closest extreme outside of the interval
 
-ggplot(filter(dailyMassFlux12, date>"2017-04-01",date<"2018-12-01"), 
-       aes(date, sedTsonde))+
-  geom_point(alpha=0.5)+
-  geom_point(aes(date, sedTbuoy), color="red", alpha=0.5)
-geom_point(aes(date, sedTbuoy), color="blue", alpha=0.5)
+# ggplot(filter(dailyMassFlux12, date>"2017-04-01",date<"2018-12-01"), 
+#        aes(date, sedTsonde))+
+#   geom_point(alpha=0.5)+
+#   geom_point(aes(date, sedTbuoy), color="red", alpha=0.5)
+
 
 
 ### making a sedT column from the sedTsonde and sedTbuoy columns 
@@ -110,12 +110,12 @@ dailyMassFlux12$sedT<-ifelse(is.na(dailyMassFlux12$sedTbuoy),
                              dailyMassFlux12$sedTbuoy)
 
 #buoy T only missing any points after sept 15th or so
-ggplot(filter(dailyMassFlux12, date>"2017-05-01", date<"2017-08-01"), aes(date, sedTsonde))+
-  geom_point(alpha=0.5)+
-  geom_point(data=filter(dailyMassFlux12, date>"2017-05-01", date<"2017-08-01"),
-             aes(date, sedT), color="red", alpha=0.5)+
-  geom_point(data=filter(dailyMassFlux12, date>"2017-05-01", date<"2017-08-01"),
-             aes(date, sedTbuoy), color="blue", alpha=0.5)
+# ggplot(filter(dailyMassFlux12, date>"2017-05-01", date<"2017-08-01"), aes(date, sedTsonde))+
+#   geom_point(alpha=0.5)+
+#   geom_point(data=filter(dailyMassFlux12, date>"2017-05-01", date<"2017-08-01"),
+#              aes(date, sedT), color="red", alpha=0.5)+
+#   geom_point(data=filter(dailyMassFlux12, date>"2017-05-01", date<"2017-08-01"),
+#              aes(date, sedTbuoy), color="blue", alpha=0.5)
 
 ggplot(dailyMassFlux12, aes(sedTbuoy, dailyEbCh4mgM2h))+
   geom_point(alpha=0.5)+
@@ -143,12 +143,12 @@ waterTcompare$siteT<-"(d) Shallow"
 
 waterTcompare<-filter(waterTcompare, RDateTime>"2017-01-01")
 
-ggplot(waterTcompare,
-       aes(monthday, sedT))+
-  geom_line(aes(color=as.factor(year)), alpha=0.7)+
-  #scale_x_date(date_breaks=("3 month"), date_minor_breaks=("1 month"))+
-  geom_vline(aes(xintercept=as.numeric(as.Date("2019-05-10"))))+
-  geom_vline(aes(xintercept=as.numeric(as.Date("2019-06-06"))))
+# ggplot(waterTcompare,
+#        aes(monthday, sedT))+
+#   geom_line(aes(color=as.factor(year)), alpha=0.7)+
+#   #scale_x_date(date_breaks=("3 month"), date_minor_breaks=("1 month"))+
+#   geom_vline(aes(xintercept=as.numeric(as.Date("2019-05-10"))))+
+#   geom_vline(aes(xintercept=as.numeric(as.Date("2019-06-06"))))
 #spring burst 2019: May 10 - June 6
 epBurst<-filter(epOutSubFilt, RDateTime>"2018-05-10", RDateTime<"2018-06-06")
 mean(epBurst$ch4_flux/1000*16*60*60, na.rm=TRUE)
@@ -200,11 +200,13 @@ lmDeepQ10_2018<-lm(log10eb ~ sedT,
 lmShalQ10_2017<-lm(log10eb ~ sedT, 
                    data=filter(dailyMassEb, site=="(b) Shallow Site", year == "2017"))
 lmShalQ10_2018<-lm(log10eb ~ sedT, 
-                   data=filter(dailyMassEb, site=="(b) Shallow Site", year == "2018"))
+                   data=filter(dailyMassEb, site=="(b) Shallow Site", year == "2018",
+                               !is.nan(log10eb), !is.infinite(log10eb)))
 lmEC.Q10_2017<-lm(log10eb ~ sedT, 
                   data=filter(dailyMassEb, site=="(a) Eddy Covariance", year == "2017"))
 lmEC.Q10_2018<-lm(log10eb ~ sedT, 
                   data=filter(dailyMassEb, site=="(a) Eddy Covariance", year == "2018"))
+
 
 ######### Figure 4 a (left panel) ##########
 ggplot(filter(dailyMassEb, year>2016, year<2019), aes(sedT, log10eb))+

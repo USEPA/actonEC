@@ -227,7 +227,7 @@ for (i in 1:with(adjDataDf, length(unique(paste(siteID, Date_Time_Sampled))))) {
 
 
 #6.  PLOT CO2 AND CH4 PROFILES FOR INSPECTION
-
+if(plotCO2CH4profilesBiweekly=="yes"){
 pdf("figures/ggaBiWeeklyProfile.pdf", paper = "a4r") # landscape orientation
 
 for (i in 1:with(gga[!is.na(gga$Date_Time_Sampled), ], # this eliminates observations without a Lake_Name (LGR data when chamber not deployed)
@@ -269,7 +269,7 @@ dev.off()
 
 rm(plot.i, plot.ii)
 
-
+}
 
 
 

@@ -158,7 +158,7 @@ grts_ts<-grts_ts%>%
 
 #####Test plots, cuml calcs#
 
-### Figure S
+### SI Figure 
 ggplot(grts_ts, aes(date, ch4.trate.mg.h_Estimate))+
   geom_point()+
   geom_point(aes(date, ch4.erate.mg.h_Estimate), color="red")+
