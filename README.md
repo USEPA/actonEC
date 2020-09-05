@@ -3,7 +3,7 @@ Citation for paper in review (9/2020):
 
 Waldo, S., J.J. Beaulieu, W. Barnett, A. D. Balz, M.J. Vanni, T. Williamson, and J.T. Walker. Submitted. Temporal patterns and biophysical controls on methane emissions from a small eutrophic reservoir: insights from two years of eddy covariance monitoring. Submitted to: Biogeosciences. 
 
-This repository contains all the material needed to reproduce the raw data processing, including the Artificial Neural Network (ANN) gap-filling, presented in Waldo et al (sibmitted). Scripts should be run in the order detailed in masterScript.R, after editing your "projectWD" path to match your project directory. See masterLibrary.R for the version of R and associated packages used for the manuscript.
+This repository contains all the material needed to reproduce the raw data processing, including the Artificial Neural Network (ANN) gap-filling, presented in Waldo et al (sibmitted). Scripts should be run in the order detailed in masterScript.R, after editing your "projectWD" path to match your project directory. See masterLibrary.R for the version of R and associated packages used for the manuscript. To reduce the size of this repository and make it easier to clone, the "BestANNsResampleNN.RData" files (where NN is a number from 01 to 20) are not saved in the repo, but are available on Zenodo.  
 
 Be aware that the ANN calculations can take a long time to run. 
 
