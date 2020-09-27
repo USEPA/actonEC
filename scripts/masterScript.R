@@ -81,6 +81,8 @@ source("scripts/qcECfluxes.R")
 file.edit('scripts/ANNscripts/mdc_gapfilling.R')  #mean diurnal course gap-filling for LE, H, ustar 
 ### and linear interpolation for P, deltaP, T, WS, and PAR:
 file.edit('scripts/ANNscripts/linearInterpolation.R')
+file.edit('scripts/ANNscripts/fitANN.R')
+file.edit('scripts/ANNscripts/evaluateANN2019.R')
 
 ## preps input into ANN
 

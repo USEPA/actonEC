@@ -1,3 +1,4 @@
+# last run using R version 3.6.1 (2019-07-05) -- "Action of the Toes" 
 # LIBRARIES---------------
 perl <- "C:/Strawberry/perl/bin/perl.exe"
 library(readxl)  # For reading Excel files

@@ -1,9 +1,3 @@
-#2019 03 05 ANN Runs to execute:
-#1. Complete dataset (2017 - 2018), using LE, H, ustar, sedT, deltaStaticP, 
-#   WS, WD, AirT, fuzzy radiation, static pressure, site location indicator, 
-#   degree of stratification
-#2. Same as above, minus site location indicator   
-#3. Subset of data, truncated to match the active trap observations
 
 #######################################
 ############# ANN Fitting #############
@@ -12,16 +6,14 @@ plotGaps(fluxDat, "ch4_flux")
 sum(is.na(fluxDat$ch4_flux)) / nrow(fluxDat) # 2018 dataset: 67% missing, vs 75% for 2017
 
 fluxDatToUse<-subset(fluxDat, fluxDat$datetime>(startdate) & fluxDat$datetime<(enddate))
-fluxDatToUse<-subset(fluxDatFilled, fluxDatFilled$datetime>(startdate) & fluxDatFilled$datetime<(enddate))
+#fluxDatToUse<-subset(fluxDatFilled, fluxDatFilled$datetime>(startdate) & fluxDatFilled$datetime<(enddate))
 
 fluxDatToUse$index<-1:nrow(fluxDatToUse)
 
 plotGaps(fluxDatToUse, "ch4_flux")
 sum(is.na(fluxDatToUse$ch4_flux)) / nrow(fluxDatToUse) #28% missing, 38% with ustar filter of 0.07
 range(fluxDatToUse$datetime)
-covarFuzzy=TRUE
-# covarWD=FALSE
-# covarPAR=FALSE
+
 ## Data prep
 annCols <- c("ch4_flux",
              "FilledSedT",
@@ -37,22 +29,14 @@ annCols <- c("ch4_flux",
 annDat <- fluxDatToUse[,annCols]
 #annDat <- fluxDatFilled[,annCols]
 
-fluxDatFilled2018<-select(fluxDat, datetime, co2_flux, annCols)
-#test5.2$FilledPAR<-test5.2$par.vws
-#annDat<-fluxDatEbFilled[,annCols]
-# write.table(fluxDatFilled,
-#             file=("C:/R_Projects/actonFluxProject/output/annDataset_20190403.csv"),
-#             sep=",",
-#             row.names=FALSE)
-write.table(fluxDatToUse,
-            file=("C:/R_Projects/actonFluxProject/output/annDataset_20190610.csv"),
+#write this data frame to file
+write.table(annDat,
+            file=(paste0("dataL2/annDataset", runVer, ".csv")),
             sep=",",
             row.names=FALSE)
 
-annIN<-read.csv("C:/R_Projects/actonFluxProject/output/annDataset_20190610.csv")
-annIN<-annIN%>%
-  mutate(datetime = as.POSIXct(datetime, format="%Y-%m-%d %H:%M:%S", tz="UTC"),
-         DOY = as.numeric(format(datetime, "%j")),
+annDat<-annDat%>%
+  mutate(DOY = as.numeric(format(datetime, "%j")),
          HOD = as.numeric(hms::hms(second(datetime),minute(datetime),hour(datetime))))
 
 ###Realizing I need parameters from annDat to evaluate each run
@@ -63,19 +47,10 @@ annIN<-annIN%>%
 #                   sep=",",
 #                   row.names=FALSE)
 
-annIN<-select(annIN, -fuzzyRAD)
-annDat<-subset(annIN2, complete.cases(annIN2[,4:ncol(annIN2)]))
-annIN2<-subset(annIN, complete.cases(annIN[,4:ncol(annIN)]))
+annDat<-subset(annDat, complete.cases(annDat[,4:ncol(annDat)]))
 
-annDat<-select(annDat, -index, -co2_flux, -datetime)
+#annDat<-select(annDat, -index, -co2_flux, -datetime)
 
-#annDat <- subset(annDat, complete.cases(annDat[,2:ncol(annDat)]))
-
-write.table(annDat,
-            file=(paste("C:/R_Projects/actonFluxProject/output/annDat", 
-                        runVer, ".csv", sep="")),
-            sep=",",
-            row.names=FALSE)
 
 ##########
 ### Start ANN setup
@@ -86,7 +61,7 @@ mins <- apply(annDat, 2, min, na.rm=TRUE)
 scaledDat <- as.data.frame(scale(annDat, center = mins, scale = maxs - mins))
 summary(scaledDat)
 
-
+### Divide complete dataset into training, testing, and validation sets
 ## K-means clustering of data points, for training/testing/validation sets
 set.seed(4321)
 k <- 10
@@ -175,6 +150,7 @@ fitANN <- function(s,lyr){
        "ann"=tmpMod, "varimp"=varImp, "r2"=tmpR2)
 }
 
+### Then run the ANN:
 fitModels <- TRUE
 if(fitModels){
   ## Make prediction grid, use apply fxn
@@ -184,7 +160,7 @@ if(fitModels){
     fitANN(x[1],x[2])
   })
   proc.time() - ptm # 2762 seconds --> ~5.5 hours
-  save(simList, file = paste("output/annSimulationList", runVer, ".RData", sep=""))
+  save(simList, file = paste("dataL2/annSimulationList", runVer, ".RData", sep=""))
 }
 
 

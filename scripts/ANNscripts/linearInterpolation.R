@@ -20,7 +20,8 @@ enddate<-"2018-11-15 12:00:00"
 runVer<-"2020"
 
 ### Load data ------
-fluxDat<-read.csv("dataL2/annDataset_mdc_20190429.csv")
+#fluxDat<-read.csv("dataL2/annDataset_mdc_20190429.csv")
+fluxDat<-EddyDataWithPosix.S
 fluxDat$datetime <- as.POSIXct(fluxDat$RDateTime, tz = "Etc/GMT+5")
 
 ## There are duplicate rows for some reason. Get rid of them.
@@ -30,11 +31,12 @@ fluxDat <- subset(fluxDat, !duplicated(datetime))
 vanni30min$datetime<-vanni30min$RDateTime
 # fluxDatFilled<-left_join(fluxDatFilled, select(vanni30min, datetime, par.vws),
 #                          by="datetime")
-fluxDat<-left_join(fluxDat, select(vanni30min, datetime, par.vws),
+fluxDat<-left_join(fluxDat, select(vanni30min, datetime, par.vws, waterT.vws, 
+                                   airT.vws, windSp.vws, staticPress.vws),
                          by="datetime")
 #sum(is.na(fluxDatFilled$par.vws))
 sum(is.na(fluxDat$par.vws))
-fluxDatFilled$FilledPAR<-fluxDatFilled$par.vws
+#fluxDatFilled$FilledPAR<-fluxDatFilled$par.vws
 fluxDat$FilledPAR<-fluxDat$par.vws
 
 

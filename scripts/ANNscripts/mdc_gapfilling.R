@@ -6,14 +6,6 @@
 ### which has very specific formatting requirements
 ### to gap fill LE, H, and ustar for input into the ANN gapfilling for CH4
 
-### If you do not have the data frame "epOutSubFilt" loaded, 
-### Run these scripts first:
-source("scriptsAndRmd/masterLibraryActon.R")
-source("scriptsAndRmd/loadEddyPro.R")
-source("scriptsAndRmd/qcEddyPro.R") 
-
-
-### otherwise, START HERE:
 timeframe30<-seq.POSIXt(from = as.POSIXct("2017-01-01 00:00:00",
                                           format="%Y-%m-%d %H:%M:%S",
                                           tz = "UTC"),
@@ -40,11 +32,6 @@ epREddy<-epREddy%>%
          daytime = replace(daytime, is.na(daytime) & Hour>8 & Hour<18, 1),
          monthday = format(RDateTime, format="%m-%d %H:%M"))
 epREddy$monthday<-as.POSIXct(epREddy$monthday, format="%m-%d %H:%M", tz="UTC")
-
-epNightS1<-filter(epREddy, daytime==0, RDateTime<"2018-05-01")
-sum(is.na(epNightS1$ch4_flux))
-sum(is.na(epREddy$Hour))
-nrow(epNightS1)
 
 #add units as attributes for prep to use with REddyProc
 
