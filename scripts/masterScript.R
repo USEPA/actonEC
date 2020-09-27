@@ -1,6 +1,10 @@
+
+
+#set path to project directory:
+projectWD<-"/Users/swaldo/Documents/epaComputer/C_R_Projects/actonEC"
+
 #load libraries:
 source("scripts/masterLibrary.R")
-projectWD<-"/Users/swaldo/Documents/epaComputer/C_R_Projects/actonEC"
 
 source("scripts/def.calc.sdg.R")
 #load GLEON dissolved & saturated 
@@ -9,7 +13,7 @@ source("scripts/def.calc.sdg.R")
 ####Parallel processing of both time series and GRTS survey data
 ####in approximate order of producing all of the manuscript figures
 
-### Load in data
+### Load in data -----
 source("scripts/compileGCdata.R")  
   #loads GC result output & data sheet with info on 
   #dissolved gas and trap sample field data
@@ -29,7 +33,7 @@ source("scripts/GRTSscripts/grtsReadSiteData.R")
   #reads in GIS files with survey info
   #reformats and saves the GIS file info into "eqAreaData" dataframe
 
-###DATA PROCESSING###
+###DATA PROCESSING### ----
   #turn raw data into data products: dissolved/sat gas, chamber fluxes
 ### GRTS survey processing:
 plotCO2CH4profiles <- "no" ## set to "yes" if you want to make the pdf file of the CO2 and CH4 
@@ -63,10 +67,21 @@ source("scripts/qcECfluxes.R")
   #makes DailyEcFluxes 
 
 ### ANN Gap Filling ##########
-### In the initiall data processing, this is where the ANN runs occurred
-### These don't need to be duplicated each time, but the scripts are 
-### included here:
-#file.edit('scripts/ANN/rEddyProc.R') #mean diurnal course gap-filling for LE, H, ustar 
+
+### The F_CH4 time series was gap filled using an Artificial Neural Network (ANN).
+### You can run the code in this section to run the gap-filling, 
+### OR you can proceed to the plotTimeSeriesFig2.R script, which loads the file "dataL2/gapFilledEC_results.csv"
+
+### The ANN uses the drivers: overlying static pressure, change in static pressure, sediment temperature (sedT), 
+### air temperature, latent heat flux (LE), sensible heat (H), wind speed, 
+### ustar (friction velocity, a measure of turbulence), and photosynthetically active radiation.
+
+### The driver time series must not have any gaps when running the ANN
+### We used mean diurnal course to gap fill LE, H, and ustar:
+file.edit('scripts/ANNscripts/mdc_gapfilling.R')  #mean diurnal course gap-filling for LE, H, ustar 
+### and linear interpolation for P, deltaP, T, WS, and PAR:
+file.edit('scripts/ANNscripts/linearInterpolation.R')
+
 ## preps input into ANN
 
 
