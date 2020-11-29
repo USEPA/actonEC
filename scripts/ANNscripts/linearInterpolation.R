@@ -40,19 +40,8 @@ rbrTsub$datetime<-rbrTsub$RDateTime
 
 fluxDat<-left_join(fluxDat, select(rbrTsub, datetime, RBRmeanT_1.6),
                    by="datetime")
-#sum(is.na(fluxDatFilled$par.vws))
 sum(is.na(fluxDat$par.vws))
-#fluxDatFilled$FilledPAR<-fluxDatFilled$par.vws
 fluxDat$FilledPAR<-fluxDat$par.vws
-
-
-fluxDat$FilledPAR<-fluxDat$par.vws
-sum(is.na(fluxDat$par.vws))
-# test5.2<-left_join(fluxDatFilled, select(vanni30min, datetime, par.vws), by="datetime")
-# sum(is.na(test5.2$par.vws)) #0!!!
-# fluxDatFilled$FilledPAR<-test5.2$par.vws
-
-## Make date into Date class.
 
 ## Make RDateTime into POSIXct class
 range(fluxDat$datetime)
@@ -242,17 +231,7 @@ ggplot(filter(fluxDat, datetime>"2018-05-01 00:00:00"),
   geom_point(alpha=0.1)
 
 
-# fluxDatFilled<-read.csv("dataL2/annDataset_20190429.csv")
-# fluxDatFilled$datetime <-as.POSIXct(fluxDatFilled$datetime, tz="UTC")
-# 
-# 
-# fluxDatFilled<-left_join(fluxDatFilled, select(fuzzyRAD.df3, datetime, fuzzyRAD), by="datetime")
-# sum(is.na(fluxDatFilled$fuzzyRAD))
-# 
-# fluxDat<-left_join(fluxDat, select(fluxDatFilled, datetime, FilledSedT, FilledAirT, FilledWindSpeed, 
-#                                    FilledStaticPress, FilledStaticPressChg, FilledWD), by="datetime")
-# fluxDatFilled<-left_join(fluxDatFilled, select(fluxDat, datetime, fuzzyRAD), by="datetime")
-# #now just need LE, H, ustar, PAR
+
 
 
 

@@ -9,6 +9,7 @@ library(matrixStats)
 
 ## output directory that has Resample_fits.RData files:
 fn = "output/ANNoutput/"
+dir.create(file.path(getwd(), "output/ANNoutput/BestANNs"))
 errorFiles = list.files(fn)
 #for testing code: load(file.path(fn, "BestANNsResample01.RData"))
 
@@ -18,8 +19,7 @@ for(f in 1:length(errorFiles)){
   minR2 <- sort(r2Sims, decreasing = TRUE)[100]
   simKeep <- sapply(errorFits, function(x){ x$r2 >= minR2 } )
   bestANNs <- errorFits[simKeep]
-  save(bestANNs, file = paste("output/BestANNs/BestANNs",
-    #"L:/Priv/Cin/NRMRL/ReservoirEbullitionStudy/actonEddyCovariance/virtualMachine/BestANNs/BestANNs", 
+  save(bestANNs, file = paste(fn, "BestANNs",
                               substring(errorFiles[[f]], 1, 10), ".RData", sep=""))
   }#one iteration takes ~10 min
 
@@ -28,7 +28,7 @@ for(f in 1:length(errorFiles)){
 ## need to select the median of the 800 flux predictions for each of the 20 errorFits, 
 ## save medPreds and medR2
 
-fnBest<-"output/BestANNs"
+fnBest<-"output/ANNoutput/BestANNs"
 bestANNfiles = list.files(fnBest)
 #summaryInfo<-list()
 ## Make separate lists to hold the categories of information we need
@@ -112,15 +112,6 @@ maxBias<-max(summaryBias$summaryBias)
 minBias<-min(summaryBias$summaryBias)
 
 ## need the measured dataset to know how many gaps:
-## load in annIN, similar to annDat, but it has a datetime column
-# annIN<-read.csv("C:/R_Projects/actonFluxProject/output/annDataset_20190610.csv")
-# annIN<-select(annIN, -fuzzyRAD)
-# annIN<-annIN%>%
-#   mutate(datetime = as.POSIXct(datetime, format="%Y-%m-%d %H:%M:%S", tz="UTC"),
-#          DOY = as.numeric(format(datetime, "%j")),
-#          HOD = as.numeric(hms::hms(second(datetime),minute(datetime),hour(datetime))))
-# annIN2<-subset(annIN, complete.cases(annIN[,4:ncol(annIN)]))
-
 sum(is.na(annIN2$ch4_flux)) #22952 missing 30-minute periods
 #bias error is in gCH4 per m2 per half hour
 cmlBias<-round(medBiasErr*sum(is.na(annIN2$ch4_flux)), digits=3) #0.254 g CH4 per m2

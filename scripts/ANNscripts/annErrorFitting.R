@@ -38,7 +38,6 @@ annCols <- c("ch4_flux",
              "datetime",
              "index")
 annDat <- fluxDatToUse[,annCols]
-#annDat <- fluxDatFilled[,annCols]
 
 ## Make Day Of Year and Hour Of Day columns
 annDat<-annDat%>%
@@ -46,11 +45,12 @@ annDat<-annDat%>%
          HOD = as.numeric(hms::hms(second(datetime),minute(datetime),hour(datetime))))
 annIN<-annDat #for ANN evaluation
 annDat<-select(annDat, -datetime)
-#write this data frame to file
-write.table(annDat,
-            file=(paste0("dataL2/annDataset", runVer, ".csv")),
-            sep=",",
-            row.names=FALSE)
+
+## optional: write this data frame to file
+# write.table(annDat,
+#             file=(paste0("dataL2/annDataset", runVer, ".csv")),
+#             sep=",",
+#             row.names=FALSE)
 
 ## Scale data from 0:1
   annDat <- subset(annDat, complete.cases(annDat[,2:ncol(annDat)]))
@@ -82,10 +82,11 @@ fitANN <- function(trn){
   tmpTest <- subset(tmpTest, !is.na(ch4_flux))
   validSet <- subset(tmpValid, !is.na(ch4_flux))
   testFlux = tmpTest$ch4_flux * (maxs[1] - mins[1]) + mins[1]
-
+  
+  #user-customizable. Analysis in the manuscript used seeds 101:150; layers 5:20
    seeds <- 101:150
    layers <- 5:20
-   # seeds = 1:2
+   # seeds = 1:2 #smaller seeds and layers for testing code
    # layers = 7:8
   outList <- list()
   ctr = 0
@@ -129,11 +130,12 @@ fitANN <- function(trn){
 ## Set initial seed for the data partitions
 set.seed(3333)
 
-
+## Create a directory called "output" for the ANN fits
+dir.create(file.path(getwd(), "output/ANNoutput"))
 ## n is the number of 'new' datasets to pump through the ANN fitting
 ## p is the proportion of the dataset on which to train - 0.5 in the previous script
-#n = 20
-n = 4  #small value for testing the code
+n = 20
+#n = 4  #small value for testing the code
 p = 0.5
 v = 0.5 #testing proportion is half of half
 trainIdx = caret::createDataPartition(y = df$Cluster, times = n, p = p, list = TRUE)
@@ -150,8 +152,6 @@ trainIdx = caret::createDataPartition(y = df$Cluster, times = n, p = p, list = T
 trainIdx = sapply(names(trainIdx), function(n){trainIdx[n]},simplify=FALSE)
 ## Now each item of trainIdx has a named list embedded inside. This will be useful
 ## when saving the parallelized runs below.
-
-
 
 ## The idea here is to use a parallelized version of 'lapply' to fit alll of the seed/layer
 ## combos and save the results.
