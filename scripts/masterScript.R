@@ -41,7 +41,7 @@ plotCO2CH4profiles <- "no" ## set to "yes" if you want to make the pdf file of t
 source("scripts/GRTSscripts/grtsLGRplotClean.R") #preps gga data files from surveys
 
 source("scripts/GRTSscripts/grtsCalcEmissions.R") #calculates diffusive, ebullitive, and total emissions for each site,
-                                      # option to make pdf file: pdf("figures/curveFitsGRTS.pdf")
+                                                  # option to make pdf file: pdf("figures/curveFitsGRTS.pdf")
 source("scripts/GRTSscripts/grtsLakeCalcs.R") #calculates mean and 95% CI for whole lake
 
 #### Time series measurement processing:
@@ -78,13 +78,12 @@ source("scripts/qcECfluxes.R")
 
 ### The driver time series must not have any gaps when running the ANN
 ### We used mean diurnal course to gap fill LE, H, and ustar:
-file.edit('scripts/ANNscripts/mdc_gapfilling.R')  #mean diurnal course gap-filling for LE, H, ustar 
+file.edit('scripts/ANNscripts/mdc_gapfilling.R')  #mean diurnal course gap-filling for the ANN drivers of: LE, H, ustar 
 ### and linear interpolation for P, deltaP, T, WS, and PAR:
 file.edit('scripts/ANNscripts/linearInterpolation.R')
-file.edit('scripts/ANNscripts/fitANN.R')
+file.edit('scripts/ANNscripts/annErrorFitting.R') #to determine both model and measurement uncert.
 file.edit('scripts/ANNscripts/evaluateANN2019.R')
 
-## preps input into ANN
 
 
 ##### DATA VISUALIZATION SCRIPTS #####
@@ -103,14 +102,6 @@ file.edit("scripts/dataVisScripts/miamiChlFig11b.R") #load chl data and make Fig
 file.edit('scriptsAndRmd/dataVisScripts/diurnalAnalysisFig12.R') #makes diurnal pdfs, Figure 12
 
 
-
-## remove non longer needed data frames and lists:
-rm(vanniMet, txtFilesSize, OUT, rbrT, ggaGRTS1, 
-   gga.model,gga.i,ep.i, data.i.co2, data.i.ch4, data.i, 
-   buoyT, adjDataDf)
-rm(ch4.ex.pred, chmVol.L.i, co2.ex.pred, gga, 
-   ggaList, dupes)
-rm(metaDataTrap, metaDataDG)
 
 
 

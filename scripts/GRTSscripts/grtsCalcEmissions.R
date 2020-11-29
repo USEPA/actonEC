@@ -187,7 +187,7 @@ for (i in 1:length(unique(paste(gga.model$Lake_Name, gga.model$siteID)))) {  # F
     stat_smooth(method = "lm", se=FALSE)
   if (class(exp.ch4.i) == "try-error") p.ch4 else  # if exp model worked, add exp line
     p.ch4 <- p.ch4 + geom_line(data=ch4.ex.pred, aes(as.numeric(elapTime), ch4.pred), color = "red")
-  print(p.ch4)
+ print(p.ch4, quiet=TRUE)
   
   
   # CO2 models

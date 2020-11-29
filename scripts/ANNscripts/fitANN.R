@@ -8,7 +8,7 @@ sum(is.na(fluxDat$ch4_flux)) / nrow(fluxDat) # 2018 dataset: 67% missing, vs 75%
 fluxDatToUse<-subset(fluxDat, fluxDat$datetime>(startdate) & fluxDat$datetime<(enddate))
 #fluxDatToUse<-subset(fluxDatFilled, fluxDatFilled$datetime>(startdate) & fluxDatFilled$datetime<(enddate))
 
-fluxDatToUse$index<-1:nrow(fluxDatToUse)
+fluxDatToUse$index<-1:nrow(fluxDatToUse) # unique id column to be used later for sampling instead of timestamp
 
 plotGaps(fluxDatToUse, "ch4_flux")
 sum(is.na(fluxDatToUse$ch4_flux)) / nrow(fluxDatToUse) #28% missing, 38% with ustar filter of 0.07
@@ -39,6 +39,7 @@ annDat<-annDat%>%
   mutate(DOY = as.numeric(format(datetime, "%j")),
          HOD = as.numeric(hms::hms(second(datetime),minute(datetime),hour(datetime))))
 
+### earmark for deletion:
 ###Realizing I need parameters from annDat to evaluate each run
 # ###Should save here
 # write.table(annDat,
@@ -47,22 +48,21 @@ annDat<-annDat%>%
 #                   sep=",",
 #                   row.names=FALSE)
 
-annDat<-subset(annDat, complete.cases(annDat[,4:ncol(annDat)]))
-
-#annDat<-select(annDat, -index, -co2_flux, -datetime)
+annDat<-subset(annDat, complete.cases(annDat[,4:ncol(annDat)])) #make sure data set is gap-free
 
 
 ##########
 ### Start ANN setup
 #########
 
+## Scale all variables from 0 to 1:
 maxs <- apply(annDat, 2, max, na.rm=TRUE)
 mins <- apply(annDat, 2, min, na.rm=TRUE)
 scaledDat <- as.data.frame(scale(annDat, center = mins, scale = maxs - mins))
 summary(scaledDat)
 
 ### Divide complete dataset into training, testing, and validation sets
-## K-means clustering of data points, for training/testing/validation sets
+## K-means clustering of data points to improve representativeness, for training/testing/validation sets
 set.seed(4321)
 k <- 10
 kClusters <- kmeans(scaledDat[,2:ncol(scaledDat)], centers = k)
@@ -84,7 +84,8 @@ trainDat <- scaledDat[trainInds,]
 ## Same routine for testing set
 set.seed(2222)
 testProp <- 0.5 # We're taking half of what's left, so 25% of the total.
-# Take out the 'training' indices and sample from what's left.
+
+# Take out the 'training' indices and sample from what's left for validation
 dfTest <- df[-trainInds,]
 sizeClust <- as.vector(table(dfTest$Cluster))
 nSampsClust <- ceiling(testProp*sizeClust)
@@ -109,19 +110,12 @@ validationDat <- scaledDat[-c(trainInds,testInds),]
 ## Apparently the tanh function provides better gradients in the tails, and is preferred
 ## over sigmoid.
 ## Several data science sources give the RELu function as 'better' -- but it's not 
-## differentiable for the regression cases. So the softplus function is used, which
+## differentiable for the regression cases. 
+
+## So the softplus function is used, which
 ## is a close differentiable approximation.
 # softplus <<- function(x) {log(1+exp(x))}
 # custom <<- function(x) {x/(1+exp(-2*k*x))}
-
-## ANN
-## If fittinf with 'neuralnet', use the following few lines.
-# set.seed(9876)
-# n <- names(trainDat)
-# f <- as.formula(paste("ch4_flux ~", paste(n[!n %in% "ch4_flux"], collapse = " + ")))
-# nn <- neuralnet(f, data = trainDat, hidden=8, act.fct = "logistic", linear.output=T)
-# plot(nn)
-# linear.output specifies that we're doing 'regression', not 'classification'
 
 
 ## Set up a simulation with varying hidden layers and seeds.
@@ -131,10 +125,12 @@ trainSet <- subset(trainDat, !is.na(ch4_flux))
 testSet <- subset(testDat, !is.na(ch4_flux))
 validSet <- subset(validationDat, !is.na(ch4_flux))
 testFlux <- testSet$ch4_flux *(maxs[1] - mins[1]) + mins[1]
+
+## Define the ANN fitting function, setting up the hyper-parameters
 fitANN <- function(s,lyr){
   # s <- seeds[1]; lyr <- layers[1]
   set.seed(s);
-  # Model
+  # Model (actual neural network model, from nnet package)
   tmpMod <- nnet::nnet(ch4_flux ~ ., data = trainSet, size = lyr,
                        maxit = 10000, entropy = TRUE)
   # Variable importance
@@ -164,14 +160,19 @@ if(fitModels){
 }
 
 
-## Error fitting
+## Take the median for all the fitted models that meet a certain R^2 threshold
+## We want to characterize both the MODEL undertainty and the SAMPLING uncertainty
+
+
+## Error fitting for sampling errors
 ## This calls a function that bootstraps the scaledDat object lots of times
+## We can use the bootstrapped results to parameterize the TOTAL (model + sampling) error
 annDat <- read.csv("output/annDat6.0.csv")
 annDat <- subset(annDat, complete.cases(annDat[,2:ncol(annDat)]))
 maxs <- apply(annDat, 2, max, na.rm=TRUE)
 mins <- apply(annDat, 2, min, na.rm=TRUE)
 scaledDat <- as.data.frame(scale(annDat, center = mins, scale = maxs - mins))
-## K-means clustering of data points, for training/testing/validation sets
+## K-means clustering of subsetted dataset data points, for training/testing/validation sets
 set.seed(4321)
 k <- 10
 kClusters <- kmeans(scaledDat[,2:ncol(scaledDat)], centers = k)
@@ -191,12 +192,14 @@ errorFunction <- function(d, df, n, ptrain = 0.5, lyr = NULL){
   bootList = lapply(trainIdx, function(x){
     ## x = trainIdx[[2]]
     tmpDat = scaledDat[x,]
+    ## we rerun the nnet gapfilling for ptrain portion of the data (50%), then get predictions on the other half
+    ## repeat this many times
     tmpMod = nnet::nnet(ch4_flux ~ ., data = tmpDat, size = lyr,
                         maxit = 10000, entropy = TRUE)
     return(data.frame("Idx" = (1:nrow(scaledDat))[-x],
                       "Preds" = predict(tmpMod, newdata = scaledDat[-x,-1 ]) * (maxs[1] - mins[1]) + mins[1]))
   })
-  predsDf = bootList %>% reduce(full_join, by = "Idx") %>% arrange(Idx)
+  predsDf = bootList %>% reduce(full_join, by = "Idx") %>% arrange(Idx) #full outer join, so each index will have a different number of rows
   return(predsDf)
 }
 

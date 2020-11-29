@@ -29,11 +29,17 @@ fluxDat <- subset(fluxDat, !duplicated(datetime))
 
 #get PAR from the vanni weather station data frame, loaded from "scripts/readData.R" script
 vanni30min$datetime<-vanni30min$RDateTime
+vanni30min$staticPress.vws<-(vanni30min$bPress.vws+vanni30min$waterPressure.vws)/1000 #air pressure and water pressure are in Pa
 # fluxDatFilled<-left_join(fluxDatFilled, select(vanni30min, datetime, par.vws),
 #                          by="datetime")
 fluxDat<-left_join(fluxDat, select(vanni30min, datetime, par.vws, waterT.vws, 
-                                   airT.vws, windSp.vws, staticPress.vws),
+                                   airT.vws, windSp.vws, windDir.vws, staticPress.vws),
                          by="datetime")
+##get sediment T from rbrTsub dataframe, loaded from "scripts/readData.R" script
+rbrTsub$datetime<-rbrTsub$RDateTime
+
+fluxDat<-left_join(fluxDat, select(rbrTsub, datetime, RBRmeanT_1.6),
+                   by="datetime")
 #sum(is.na(fluxDatFilled$par.vws))
 sum(is.na(fluxDat$par.vws))
 #fluxDatFilled$FilledPAR<-fluxDatFilled$par.vws
@@ -172,21 +178,12 @@ plotGaps(fluxDat, "FilledWindSpeed")
 ######## Static Pressure Gap-Filling
 ## There is a Miami weather station static pressure variable,
 ## staticPress.vws. Use that to build a model
-sum(is.na(fluxDat$staticPress))
+#sum(is.na(fluxDat$staticPress))
 sum(is.na(fluxDat$staticPress.vws))
-plotGaps(fluxDat, "staticPress")
-## Quick plot
-#ggplot(fluxDat, aes(x = staticPress.vws, y = staticPress)) + geom_point() +
-#  geom_smooth(method="lm")
-## Looks like a fantastic fit.
-statPressLM <- lm(staticPress ~ staticPress.vws, data = fluxDat)
-summary(statPressLM) # Great R^2 -- 0.99
-## Use Miami static pressure to fill in eddy cov tower static pressure
-spPreds <- predict(statPressLM, 
-                   newdata = data.frame("staticPress.vws"=fluxDat$staticPress.vws))
-fluxDat$FilledStaticPress <- ifelse(is.na(fluxDat$staticPress),
-                                    spPreds, 
-                                    fluxDat$staticPress)
+plotGaps(fluxDat, "staticPress.vws")
+
+fluxDat$FilledStaticPressure<-fluxDat$staticPress.vws
+
 sum(is.na(fluxDat$FilledStaticPress)) # Take the median
 indNA <- which(is.na(fluxDat$FilledStaticPress))
 # Take the median
@@ -202,10 +199,6 @@ fluxDat$FilledStaticPressChg <- c(NA, diff(fluxDat$FilledStaticPress))
 
 
 ####### Site Location
-
-  fluxDatFilled$FilledSite<-ifelse(fluxDatFilled$datetime<"2018-04-18",
-                             1, #dock
-                             0) #aquatic tower
   fluxDat$FilledSite<-ifelse(fluxDat$datetime<"2018-04-18",
                                    1, #dock
                                    0) #aquatic tower
@@ -236,7 +229,8 @@ sum(is.na(fluxDat$FilledH))
 summary(fluxDat$H_filled)  
 
 tsTmp <- ts(fluxDat$H_filled)
-plotNA.distribution(tsTmp) #some gaps during tower resiting
+#plotNA.distribution(tsTmp) #some gaps during tower resiting
+ggplot_na_distribution(tsTmp)
 
 ### Friction velocity (ustar)
 plotGaps(fluxDat, "ustar")

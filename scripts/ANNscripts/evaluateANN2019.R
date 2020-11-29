@@ -1,21 +1,14 @@
 
-##Start here if you just ran an ANN Fit Model
-
 library(rlist)
 library(matrixStats)
-
-## Read in the ANN input data, version 7.0, which includes DOY, HOD, and 
-## excludes "fuzzyRAD"
-annDat = read.csv("output/annDat7.csv")
-annDat <- subset(annDat, complete.cases(annDat[,2:ncol(annDat)]))
-maxs <- apply(annDat, 2, max, na.rm=TRUE)
-mins <- apply(annDat, 2, min, na.rm=TRUE)
 
 ## Look at each errorFits object and pick out the 'best' models based on the 
 ## TESTING dataset by looking at the R^2 values first
 ## then save to the output/BestANNs subfolder
 ## don't need to do this if bestANNfiles is already populated -- skip to line 42
-fn = "L:/Priv/Cin/NRMRL/ReservoirEbullitionStudy/actonEddyCovariance/virtualMachine/output"
+
+## output directory that has Resample_fits.RData files:
+fn = "output/ANNoutput/"
 errorFiles = list.files(fn)
 #for testing code: load(file.path(fn, "BestANNsResample01.RData"))
 
@@ -120,13 +113,13 @@ minBias<-min(summaryBias$summaryBias)
 
 ## need the measured dataset to know how many gaps:
 ## load in annIN, similar to annDat, but it has a datetime column
-annIN<-read.csv("C:/R_Projects/actonFluxProject/output/annDataset_20190610.csv")
-annIN<-select(annIN, -fuzzyRAD)
-annIN<-annIN%>%
-  mutate(datetime = as.POSIXct(datetime, format="%Y-%m-%d %H:%M:%S", tz="UTC"),
-         DOY = as.numeric(format(datetime, "%j")),
-         HOD = as.numeric(hms::hms(second(datetime),minute(datetime),hour(datetime))))
-annIN2<-subset(annIN, complete.cases(annIN[,4:ncol(annIN)]))
+# annIN<-read.csv("C:/R_Projects/actonFluxProject/output/annDataset_20190610.csv")
+# annIN<-select(annIN, -fuzzyRAD)
+# annIN<-annIN%>%
+#   mutate(datetime = as.POSIXct(datetime, format="%Y-%m-%d %H:%M:%S", tz="UTC"),
+#          DOY = as.numeric(format(datetime, "%j")),
+#          HOD = as.numeric(hms::hms(second(datetime),minute(datetime),hour(datetime))))
+# annIN2<-subset(annIN, complete.cases(annIN[,4:ncol(annIN)]))
 
 sum(is.na(annIN2$ch4_flux)) #22952 missing 30-minute periods
 #bias error is in gCH4 per m2 per half hour
@@ -134,7 +127,7 @@ cmlBias<-round(medBiasErr*sum(is.na(annIN2$ch4_flux)), digits=3) #0.254 g CH4 pe
 cmlBias<-round(minBias*sum(is.na(annIN2$ch4_flux)), digits=3)
 
 ## Let's make a pdf file with the linear regression plots for each of the 20 runs
-pdf(paper = "a4r", width = 20, file = "output/annEvalPlots/ANN20xLinReg.pdf") # landscape orientation
+pdf(paper = "a4r", width = 20, file = "output/ANN20xLinReg.pdf") # landscape orientation
 lapply(summary.V.Info, function(x){
   df.temp<-data.frame(x$measFlux, x$predsV)
   colnames(df.temp)<-c("measFlux", "predsV")
@@ -150,7 +143,7 @@ lapply(summary.V.Info, function(x){
 dev.off() 
 
 ## Same thing for VIF plots
-pdf(paper = "a4r", width = 20, file = "output/annEvalPlots/ANN20xVIF.pdf") # landscape orientation
+pdf(paper = "a4r", width = 20, file = "output/ANN20xVIF.pdf") # landscape orientation
 lapply(summary.VIF.Info, function(x){
   df.vif.temp<-data.frame(x$varImport)
   ggplot(df.vif.temp, 
@@ -285,90 +278,3 @@ ggplot(annIN2, aes(datetime, ch4_filled))+
   geom_line(data=dailyFilled, aes(date, meanFilledCH4_L95), color="red", alpha=0.5)+
   geom_line(data=dailyFilled, aes(date, meanFilledCH4_U95), color="red", alpha=0.5)
 
-
-
-
-
-
-
-
-
-
-
-
-
-## Previous code
-
-
-# d <- data.frame("Flux" = validFlux,
-#                     "Preds" = validMedians)
-#     
-#     validRuns <- lapply(bestANNs, function(x){
-#        x <- bestANNs[[1]]
-#       tmpPreds <- predict(x$ann, newdata = validSet[,annCols[-1]]) * 
-#         (maxs[1] - mins[1]) + mins[1]
-#       tmpR2 <- 1 - (sum((validFlux-tmpPreds )^2)/sum((validFlux-mean(validFlux))^2))
-#       list("preds" = tmpPreds, "r2" = tmpR2)
-#     })
-#     
-#     validPreds <- do.call("cbind",lapply(validRuns, function(x){ x$preds }))
-#     ## Median predictions
-#     validMedians <- apply(validPreds, 1, median)
-#     ## Overall R^2 value for the median predictions
-#     medR2 <- 1 - (sum((validFlux-validMedians)^2)/sum((validFlux-mean(validFlux))^2))
-#     
-#   
-# })
-# 
-# 
-# 
-# ## Since all of the predictions are returned already, we only really need to send back the
-# ## indices that represent the validation data set.
-# ## Example of how to assemble the validation r2 values:
-# fn = "output/ANNerrors"
-# errorFiles = list.files(fn)
-# errorFiles
-# errorList = list()
-# 
-# for(f in errorFiles[1:2]){
-#   load(file.path(fn, f))
-#   errorList = append(errorList, errorFits)
-# }
-# 
-# # for(f in errorFiles){
-# #   load(file.path(fn, f))
-# #   errorList = append(errorList, errorFits)
-# # }
-# 
-# validRuns <- lapply(errorList, function(x){
-#   # x = errorFits[[1]]
-#   validFlux = annDat$ch4_flux[x$valIdx]
-#   predFlux = x$preds[x$valIdx,1] # it's a matrix, so have to specify the column
-#   if(any(is.na(validFlux))){
-#     naInds = is.na(validFlux)
-#     validFlux = validFlux[!naInds]
-#     predFlux = predFlux[!naInds]
-#   }
-#   tmpR2 <- 1 - (sum((validFlux-predFlux )^2)/sum((validFlux-mean(validFlux))^2))
-#   list("preds" = predFlux, "r2" = tmpR2, "valIdx" = x$valIdx )
-# })
-# 
-# ## Each set of validation predictions are from different indices now.
-# validPredsList = lapply(validRuns, function(x){
-#   data.frame("Idx" = x$valIdx, "Preds" = x$preds)
-# })
-# 
-# ## Cool function to do recursive joins (thanks StackOverflow)
-# func <- function(...){
-#   df1 = list(...)[[1]]
-#   df2 = list(...)[[2]]
-#   col1 = colnames(df1)[1]
-#   col2 = colnames(df2)[1]
-#   xxx = full_join(..., by = "Idx")
-#   return(xxx)
-# }
-# 
-# validPreds = Reduce( func, validPredsList)
-# head(validPreds) # This should have every index in the union of validation sets
-# 
-# 
